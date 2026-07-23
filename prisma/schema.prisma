@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql" // BẮT BUỘC ĐỔI: TiDB dùng giao thức MySQL
+  url      = env("DATABASE_URL")
+}
+
+// Định nghĩa các Role trong hệ thống
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+// ----------------------------------------------------
+// 1. Bảng Users (Đã gộp chuẩn tất cả quan hệ & thông tin)
+// ----------------------------------------------------
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String   @map("full_name") @db.VarChar(100)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         Role     @default(PATIENT)
+  patientCode  String?  @default("BN-NEW") // Mã bệnh nhân
+  
+  // Bổ sung các thông tin cá nhân cơ bản
+  phone        String?  @db.VarChar(20)
+  dob          String?  @db.VarChar(20)
+  gender       String?  @default("Nam")
+  address      String?  @db.VarChar(255)
+  avatar       String?  @db.Text
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_after")
+
+  // Quan hệ (Relations)
+  healthMetric          HealthMetric?
+  prescriptions         Prescription[]
+  labTests              LabTest[]
+  doctorProfile         DoctorProfile?
+  appointmentsAsPatient Appointment[] @relation("PatientAppointments")
+  appointmentsAsDoctor  Appointment[] @relation("DoctorAppointments")
+  
+  // Quan hệ mới thêm cho Hồ sơ khám bệnh
+  examinationsAsPatient Examination[] @relation("PatientExaminations")
+  examinationsAsDoctor  Examination[] @relation("DoctorExaminations")
+
+  @@map("users") // Đặt tên bảng trong DB là 'users' viết thường
+}
+
+// ----------------------------------------------------
+// 2. Bảng Chỉ số sức khỏe
+// ----------------------------------------------------
+model HealthMetric {
+  id            Int      @id @default(autoincrement())
+  patientId     Int      @unique
+  patient       User     @relation(fields: [patientId], references: [id])
+  heartRate     Int      @default(75)
+  bloodPressure String   @default("120/80")
+  weight        Float    @default(65)
+  bmi           Float    @default(22.0)
+  aiScore       Int      @default(90)
+  aiMessage     String   @default("Sức khỏe ổn định.")
+  updatedAt     DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 3. Bảng Lịch khám
+// ----------------------------------------------------
+model Appointment {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     User     @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctorId    Int
+  doctor      User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  specialty   String
+  bookingDate String   // VD: "15/08/2026"
+  bookingTime String   // VD: "09:30"
+  reason      String?  @db.Text
+  status      String   @default("CHỜ XÁC NHẬN") // CHỜ XÁC NHẬN, ĐÃ XÁC NHẬN, HOÀN THÀNH, ĐÃ HỦY
+  createdAt   DateTime @default(now())
+
+  // Liên kết 1-1 với hồ sơ khám
+  examination Examination? 
+}
+
+// ----------------------------------------------------
+// 4. Bảng Đơn thuốc
+// ----------------------------------------------------
+model Prescription {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     User     @relation(fields: [patientId], references: [id])
+  code        String   // VD: DT001
+  createdAt   DateTime @default(now())
+  items       PrescriptionItem[]
+}
+
+// ----------------------------------------------------
+// 5. Bảng Chi tiết Đơn thuốc (Các loại thuốc)
+// ----------------------------------------------------
+model PrescriptionItem {
+  id             Int          @id @default(autoincrement())
+  prescriptionId Int
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  medicationName String       
+  dosage         String       
+  instructions   String       
+  remaining      String       
+  statusText     String       
+  iconType       String       // "pill" hoặc "liquid"
+}
+
+// ----------------------------------------------------
+// 6. Bảng Kết quả xét nghiệm
+// ----------------------------------------------------
+model LabTest {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     User     @relation(fields: [patientId], references: [id])
+  testName    String
+  date        DateTime
+  doctorName  String
+  result      String
+  statusType  String   // GOOD, WARNING, DANGER
+  notes       String?  @db.Text // Yêu cầu cụ thể của bác sĩ
+}
+
+// ----------------------------------------------------
+// 7. Bảng thông tin chi tiết của Bác sĩ (Đã gộp thông tin chuyên môn)
+// ----------------------------------------------------
+model DoctorProfile {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @unique
+  user        User   @relation(fields: [userId], references: [id])
+  specialty   String // VD: "Nội tổng quát", "Tim mạch"
+  experience  String // VD: "12 năm"
+  rating      Float  @default(5.0)
+  price       Int    @default(150000)
+  imagePrefix String @default("B") // Chữ cái Avatar
+  
+  // Bổ sung thông tin chuyên môn
+  degree       String?  @default("Thạc sĩ Y Khoa")
+  university   String?  @default("Đại học Y Hà Nội")
+  languages    String?  @default("Việt, Anh")
+  certificates Json?    // Lưu mảng bằng cấp dạng JSON
+  schedule     Json?    // Lưu mảng lịch làm việc dạng JSON
+}
+
+// ----------------------------------------------------
+// 8. Bảng Hồ sơ khám bệnh
+// ----------------------------------------------------
+model Examination {
+  id            Int         @id @default(autoincrement())
+  appointmentId Int         @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  
+  patientId     Int
+  patient       User        @relation("PatientExaminations", fields: [patientId], references: [id])
+  
+  doctorId      Int
+  doctor        User        @relation("DoctorExaminations", fields: [doctorId], references: [id])
+  
+  symptoms      String      @db.Text // Triệu chứng lâm sàng
+  diagnosis     String      @db.Text // Chẩn đoán
+  notes         String?     @db.Text // Lời dặn của bác sĩ
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
