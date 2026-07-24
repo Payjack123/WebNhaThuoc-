@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,18 +17,15 @@ export default function PatientAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('book');
   const [step, setStep] = useState(1);
   
-  // States tải dữ liệu
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // States lưu dữ liệu thật từ DB
   const [userData, setUserData] = useState<any>(null);
   const [doctorsList, setDoctorsList] = useState<any[]>([]);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
-  // Thêm thuộc tính doctorId, doctorPrice, finalCode vào State để lưu DB
   const [bookingData, setBookingData] = useState({
     specialty: '',
     doctor: '',
@@ -39,7 +37,6 @@ export default function PatientAppointmentsPage() {
     finalCode: ''
   });
 
-  // --- DỮ LIỆU ĐƯỢC GIỮ NGUYÊN (Không đổi) ---
   const specialties = [
     { id: 'SP1', name: 'Nội tổng quát', icon: Stethoscope, color: 'text-blue-500 bg-blue-50' },
     { id: 'SP2', name: 'Tim mạch', icon: HeartPulse, color: 'text-red-500 bg-red-50' },
@@ -50,14 +47,12 @@ export default function PatientAppointmentsPage() {
   ];
   const availableTimes = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '14:00', '14:30', '15:00', '15:30'];
 
-  // 1. FETCH DỮ LIỆU KHI LOAD TRANG
   useEffect(() => {
     const fetchData = async () => {
       const res = await getPatientAppointmentData();
       if (res.success && res.data) {
         setUserData(res.data.user);
         
-        // Format bác sĩ thật cho giống y hệt mock data của bạn
         const formattedDoctors = res.data.doctors.map((doc: any) => ({
           id: doc.id,
           name: doc.fullName,
@@ -70,7 +65,6 @@ export default function PatientAppointmentsPage() {
         }));
         setDoctorsList(formattedDoctors);
 
-        // Format lịch sử thật cho giống y hệt mock data của bạn
         const formattedHistory = res.data.history.map((apt: any) => {
           let color = 'text-gray-700 bg-gray-100 border-gray-200';
           if (apt.status === 'ĐÃ XÁC NHẬN') color = 'text-green-700 bg-green-100 border-green-200';
@@ -94,7 +88,6 @@ export default function PatientAppointmentsPage() {
     };
     fetchData();
 
-    // Tự động sinh ra 7 ngày tiếp theo (Thay cho availableDates ảo)
     const dates = [];
     const today = new Date();
     for (let i = 1; i <= 7; i++) {
@@ -107,7 +100,6 @@ export default function PatientAppointmentsPage() {
     setGeneratedDates(dates);
   }, [router]);
 
-  // 2. TÌM GIỜ ĐÃ BỊ ĐẶT (Khi user đổi Bác sĩ hoặc Ngày)
   useEffect(() => {
     const fetchTimes = async () => {
       if (bookingData.doctorId && bookingData.date) {
@@ -119,7 +111,6 @@ export default function PatientAppointmentsPage() {
     fetchTimes();
   }, [bookingData.doctorId, bookingData.date]);
 
-  // 3. XÁC NHẬN LƯU VÀO DB
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
     const fullDate = `${bookingData.date}/${new Date().getFullYear()}`;
@@ -144,7 +135,17 @@ export default function PatientAppointmentsPage() {
 
   const handleLogout = () => router.push('/login');
 
-  const filteredDoctors = doctorsList.filter(doc => doc.specialty === bookingData.specialty);
+  // FIX LỖI Ở ĐÂY: Lọc không phân biệt hoa thường và bỏ khoảng trắng thừa
+  const filteredDoctors = doctorsList.filter(doc => 
+    doc.specialty?.trim().toLowerCase() === bookingData.specialty?.trim().toLowerCase()
+  );
+
+  // Hàm tính số lượng bác sĩ của 1 khoa
+  const getDoctorCount = (specialtyName: string) => {
+    return doctorsList.filter(doc => 
+      doc.specialty?.trim().toLowerCase() === specialtyName.trim().toLowerCase()
+    ).length;
+  };
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
@@ -285,19 +286,31 @@ export default function PatientAppointmentsPage() {
                       <input type="text" placeholder="Tìm kiếm chuyên khoa..." className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition-all"/>
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
                     </div>
+                    
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {specialties.map((spec) => (
-                        <div 
-                          key={spec.id} 
-                          onClick={() => { setBookingData({ ...bookingData, specialty: spec.name, doctor: '', doctorId: 0 }); setStep(2); }}
-                          className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-3 group ${bookingData.specialty === spec.name ? 'border-[#2563EB] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-md'}`}
-                        >
-                          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${spec.color} transition-transform group-hover:scale-110`}>
-                            <spec.icon size={28}/>
+                      {specialties.map((spec) => {
+                        // Tính số bác sĩ có trong khoa này
+                        const count = getDoctorCount(spec.name);
+                        
+                        return (
+                          <div 
+                            key={spec.id} 
+                            onClick={() => { setBookingData({ ...bookingData, specialty: spec.name, doctor: '', doctorId: 0 }); setStep(2); }}
+                            className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-3 group ${bookingData.specialty === spec.name ? 'border-[#2563EB] bg-blue-50/50' : 'border-gray-100 bg-white hover:border-blue-200 hover:shadow-md'}`}
+                          >
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center ${spec.color} transition-transform group-hover:scale-110`}>
+                              <spec.icon size={28}/>
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-gray-900">{spec.name}</h3>
+                              {/* Hiển thị số lượng bác sĩ */}
+                              <p className={`text-xs mt-1 ${count > 0 ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                                {count > 0 ? `${count} bác sĩ` : 'Chưa có bác sĩ'}
+                              </p>
+                            </div>
                           </div>
-                          <h3 className="font-bold text-gray-900">{spec.name}</h3>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -332,32 +345,32 @@ export default function PatientAppointmentsPage() {
                             </div>
                           </div>
                           <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-  <div>
-    <p className="text-xs text-gray-500 uppercase font-bold">Phí khám</p>
-    <p className="font-black text-[#2563EB]">{doc.price}</p>
-  </div>
-  
-  {/* Thêm div bọc 2 nút lại */}
-  <div className="flex gap-2">
-    <Link 
-      href={`/doctor/profile`} // Mở trang profile
-      target="_blank" // Mở ra tab mới để không làm mất tiến trình đặt lịch
-      className="bg-white border border-[#2563EB] text-[#2563EB] hover:bg-blue-50 px-4 py-2 rounded-xl font-bold transition-colors"
-    >
-      Xem hồ sơ
-    </Link>
-    <button 
-      onClick={() => { setBookingData({ ...bookingData, doctor: doc.name, doctorId: doc.id, doctorPrice: doc.rawPrice }); setStep(3); }}
-      className="bg-blue-50 text-[#2563EB] hover:bg-[#2563EB] hover:text-white px-5 py-2 rounded-xl font-bold transition-colors"
-    >
-      Chọn bác sĩ
-    </button>
-  </div>
-</div>  
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase font-bold">Phí khám</p>
+                              <p className="font-black text-[#2563EB]">{doc.price}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Link 
+                                href={`/doctor/profile`} 
+                                target="_blank" 
+                                className="bg-white border border-[#2563EB] text-[#2563EB] hover:bg-blue-50 px-4 py-2 rounded-xl font-bold transition-colors text-sm flex items-center"
+                              >
+                                Xem hồ sơ
+                              </Link>
+                              <button 
+                                onClick={() => { setBookingData({ ...bookingData, doctor: doc.name, doctorId: doc.id, doctorPrice: doc.rawPrice }); setStep(3); }}
+                                className="bg-blue-50 text-[#2563EB] hover:bg-[#2563EB] hover:text-white px-5 py-2 rounded-xl font-bold transition-colors text-sm"
+                              >
+                                Chọn khám
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )) : (
-                        <div className="col-span-2 text-center py-10 text-gray-500">
-                          <p>Hiện không có bác sĩ nào trực thuộc chuyên khoa này.</p>
+                        <div className="col-span-2 text-center py-12 bg-gray-50 rounded-2xl border border-gray-100 text-gray-500">
+                          <Stethoscope size={48} className="mx-auto text-gray-300 mb-3" />
+                          <p className="font-medium text-gray-900">Không có bác sĩ</p>
+                          <p className="text-sm mt-1">Hiện không có bác sĩ nào đăng ký thuộc chuyên khoa này.</p>
                         </div>
                       )}
                     </div>
@@ -376,7 +389,7 @@ export default function PatientAppointmentsPage() {
                     </div>
 
                     <div className="space-y-6">
-                      {/* Chọn Ngày (Sử dụng generatedDates thay cho availableDates cứng) */}
+                      {/* Chọn Ngày */}
                       <div>
                         <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase">1. Chọn ngày</h3>
                         <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
@@ -393,12 +406,11 @@ export default function PatientAppointmentsPage() {
                         </div>
                       </div>
 
-                      {/* Chọn Giờ (Tự disable các giờ đã có trong DB) */}
+                      {/* Chọn Giờ */}
                       <div className={`transition-opacity ${bookingData.date ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                         <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase flex items-center gap-2">2. Chọn khung giờ <span className="text-xs font-normal normal-case bg-green-100 text-green-700 px-2 py-0.5 rounded">Khung giờ trống</span></h3>
                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                           {availableTimes.map((t) => {
-                            // Check dữ liệu thật từ DB
                             const isFull = bookedTimes.includes(t); 
                             return (
                               <button 
@@ -456,7 +468,6 @@ export default function PatientAppointmentsPage() {
                     </div>
 
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 relative overflow-hidden">
-                      {/* Ticket decor */}
                       <div className="absolute -left-3 top-1/2 w-6 h-6 bg-gray-50 rounded-full border-r border-gray-200"></div>
                       <div className="absolute -right-3 top-1/2 w-6 h-6 bg-gray-50 rounded-full border-l border-gray-200"></div>
                       <div className="absolute left-4 right-4 top-1/2 border-t-2 border-dashed border-gray-100"></div>
@@ -544,7 +555,7 @@ export default function PatientAppointmentsPage() {
           )}
 
           {/* =======================================
-              TAB 2: LỊCH SỬ ĐẶT LỊCH (Dữ liệu thật)
+              TAB 2: LỊCH SỬ ĐẶT LỊCH
           ======================================= */}
           {activeTab === 'history' && (
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4">

@@ -7,10 +7,11 @@ import {
   LayoutDashboard, CalendarDays, Users, FileText, Pill, TestTube, 
   BarChart3, Bell, User, Settings, LogOut, Search, Star, 
   Activity, MapPin, Phone, Mail, Calendar, Award, Briefcase, 
-  Clock, Edit, CheckCircle2, ThumbsUp, ShieldCheck, Loader2
+  Clock, Edit, CheckCircle2, ThumbsUp, ShieldCheck, Loader2, X, Save
 } from 'lucide-react';
 
-import { getDoctorProfileData } from '@/app/doctor/profile/actions';
+// Chú ý đường dẫn import, hãy sửa lại cho đúng với cấu trúc thư mục của bạn
+import { getDoctorProfileData, updateDoctorProfileData } from '@/app/doctor/profile/actions';
 
 export default function DoctorProfile() {
   const router = useRouter();
@@ -19,21 +20,59 @@ export default function DoctorProfile() {
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Kéo dữ liệu từ TiDB
+  // States cho Form Chỉnh sửa
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    phone: '', dob: '', gender: '', address: '',
+    specialty: '', degree: '', university: '', experience: 0, languages: ''
+  });
+
+ // Kéo dữ liệu từ TiDB
+  const fetchProfile = async () => {
+    const res = await getDoctorProfileData();
+    if (res.success && res.data) {
+      setProfile(res.data);
+      
+      // FIX LỖI: Kiểm tra an toàn trước khi gán vào Form
+      setEditForm({
+        phone: res.data.phone && res.data.phone !== 'Chưa cập nhật' ? res.data.phone : '',
+        dob: res.data.dob && res.data.dob !== 'Chưa cập nhật' ? res.data.dob : '',
+        gender: res.data.gender || 'Nam',
+        address: res.data.address && res.data.address !== 'Chưa cập nhật' ? res.data.address : '',
+        specialty: res.data.specialty && res.data.specialty !== 'Chưa cập nhật' ? res.data.specialty : '',
+        degree: res.data.degree && res.data.degree !== 'Chưa cập nhật' ? res.data.degree : '',
+        university: res.data.university && res.data.university !== 'Chưa cập nhật' ? res.data.university : '',
+        experience: res.data.experience || 0,
+        languages: res.data.languages && res.data.languages !== 'Chưa cập nhật' ? res.data.languages : '',
+      });
+    } else {
+      router.push('/login');
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      const res = await getDoctorProfileData();
-      if (res.success && res.data) {
-        setProfile(res.data);
-      } else {
-        router.push('/login');
-      }
-      setIsLoading(false);
-    };
     fetchProfile();
   }, [router]);
 
   const handleLogout = () => router.push('/login');
+
+  // Hàm xử lý Lưu Hồ Sơ
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    const res = await updateDoctorProfileData(editForm);
+    setIsSaving(false);
+    
+    if (res.success) {
+      alert(res.message);
+      setIsEditing(false); // Tắt Modal
+      setIsLoading(true);
+      fetchProfile(); // Tải lại dữ liệu mới nhất từ TiDB để cập nhật UI
+    } else {
+      alert(res.message);
+    }
+  };
 
   if (isLoading || !profile) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
@@ -43,9 +82,9 @@ export default function DoctorProfile() {
     <div className="min-h-screen flex bg-gray-50 font-sans text-gray-800">
       
       {/* ==========================================
-          1. SIDEBAR (Giữ nguyên cấu trúc)
+          1. SIDEBAR
       ========================================== */}
-      <aside className="w-64 bg-[#172554] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0">
+      <aside className="w-64 bg-[#172554] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 z-10">
         <div className="h-20 flex items-center justify-center border-b border-blue-900/50">
           <div className="flex items-center gap-2 text-white">
             <Activity className="text-orange-500" size={28}/>
@@ -93,7 +132,7 @@ export default function DoctorProfile() {
       {/* ==========================================
           2. MAIN CONTENT
       ========================================== */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
         
         {/* TOP HEADER */}
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0 sticky top-0 z-20">
@@ -138,9 +177,15 @@ export default function DoctorProfile() {
                     </p>
                   </div>
                 </div>
-                <button className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-50 transition flex items-center gap-2 shadow-sm mb-2">
+                
+                {/* NÚT MỞ MODAL CHỈNH SỬA */}
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-50 transition flex items-center gap-2 shadow-sm mb-2"
+                >
                   <Edit size={16}/> Chỉnh sửa hồ sơ
                 </button>
+
               </div>
 
               {/* Quick Stats Banner */}
@@ -273,7 +318,7 @@ export default function DoctorProfile() {
                 </div>
               )}
 
-              {/* TAB 3: LỊCH LÀM VIỆC */}
+              {/* CÁC TAB KHÁC GIỮ NGUYÊN */}
               {activeTab === 'schedule' && (
                 <div className="max-w-4xl animate-in fade-in">
                   <div className="flex justify-between items-center mb-6">
@@ -307,7 +352,6 @@ export default function DoctorProfile() {
                 </div>
               )}
 
-              {/* TAB 4: HIỆU SUẤT & ĐÁNH GIÁ */}
               {activeTab === 'performance' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
                   <div className="space-y-6">
@@ -368,6 +412,138 @@ export default function DoctorProfile() {
           </div>
         </div>
       </main>
+
+      {/* ==========================================
+          3. MODAL (POPUP) CHỈNH SỬA HỒ SƠ 
+      ========================================== */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Edit size={20} className="text-[#2563EB]"/> Chỉnh sửa Hồ sơ Bác sĩ
+              </h2>
+              <button onClick={() => setIsEditing(false)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition">
+                <X size={20}/>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8">
+              
+              {/* Form 1: Thông tin cá nhân */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">1. Thông tin cá nhân</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại</label>
+                    <input 
+                      type="text" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: 0988 123 456" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Ngày sinh</label>
+                    <input 
+                      type="text" value={editForm.dob} onChange={e => setEditForm({...editForm, dob: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: 20/05/1988" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Giới tính</label>
+                    <select 
+                      value={editForm.gender} onChange={e => setEditForm({...editForm, gender: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition"
+                    >
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ hiện tại</label>
+                    <input 
+                      type="text" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: Quận Cầu Giấy, Hà Nội" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form 2: Thông tin chuyên môn */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">2. Chuyên môn & Năng lực</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Chuyên khoa chính</label>
+                    <input 
+                      type="text" value={editForm.specialty} onChange={e => setEditForm({...editForm, specialty: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: Nội tổng quát" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Học vị</label>
+                    <input 
+                      type="text" value={editForm.degree} onChange={e => setEditForm({...editForm, degree: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: Thạc sĩ Y Khoa" 
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Nơi đào tạo</label>
+                    <input 
+                      type="text" value={editForm.university} onChange={e => setEditForm({...editForm, university: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: Đại học Y Hà Nội" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Số năm kinh nghiệm</label>
+                    <input 
+                      type="number" value={editForm.experience} onChange={e => setEditForm({...editForm, experience: Number(e.target.value)})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Ngoại ngữ</label>
+                    <input 
+                      type="text" value={editForm.languages} onChange={e => setEditForm({...editForm, languages: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                      placeholder="VD: Tiếng Anh, Tiếng Pháp" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button 
+                disabled={isSaving}
+                onClick={() => setIsEditing(false)} 
+                className="px-6 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                disabled={isSaving}
+                onClick={handleSaveProfile} 
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#2563EB] hover:bg-blue-700 shadow-md transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 size={18} className="animate-spin"/> : <Save size={18}/>} Lưu thông tin
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -4,6 +4,9 @@
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
+// ==========================================
+// 1. HÀM LẤY DỮ LIỆU HỒ SƠ BÁC SĨ
+// ==========================================
 export async function getDoctorProfileData(targetDoctorId?: number) {
   try {
     let doctorIdToFetch = targetDoctorId;
@@ -23,18 +26,15 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       }
     });
 
-    // SỬA Ở ĐÂY: Chỉ báo lỗi nếu không tìm thấy User
     if (!doctor) {
       return { success: false, message: 'Không tìm thấy tài khoản bác sĩ' };
     }
 
-    // Đếm số lượng bệnh nhân thực tế từ lịch khám
     const uniquePatients = new Set(await prisma.appointment.findMany({
       where: { doctorId: doctor.id },
       select: { patientId: true }
     }));
 
-    // SỬA Ở ĐÂY: Nếu bác sĩ mới đăng ký chưa có profile, gán giá trị mặc định để không bị vỡ UI
     const dProfile = doctor.doctorProfile || {
       specialty: 'Chưa cập nhật',
       degree: 'Chưa cập nhật',
@@ -46,7 +46,7 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       schedule: null
     };
 
-    // Map dữ liệu DB vào đúng format UI của bạn
+   // Map dữ liệu DB vào đúng format UI của bạn
     const profileData = {
       id: `DOC-${doctor.id.toString().padStart(3, '0')}`,
       fullName: doctor.fullName,
@@ -57,13 +57,13 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       address: doctor.address || 'Chưa cập nhật',
       avatar: doctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=250&h=250&fit=crop',
       
-      // Lấy từ biến dProfile đã xử lý chống lỗi ở trên
-      specialty: dProfile.specialty,
-      degree: dProfile.degree,
-      university: dProfile.university,
+      // FIX LỖI: Dùng || để bắt các giá trị null từ Database cũ
+      specialty: dProfile.specialty || 'Chưa cập nhật',
+      degree: dProfile.degree || 'Chưa cập nhật',
+      university: dProfile.university || 'Chưa cập nhật',
       experience: parseInt(dProfile.experience) || 0,
-      languages: dProfile.languages,
-      rating: dProfile.rating,
+      languages: dProfile.languages || 'Chưa cập nhật',
+      rating: dProfile.rating || 5.0,
       status: 'Đang làm việc',
       
       // Lấy từ JSON, nếu null thì gán mặc định để UI không lỗi
@@ -89,5 +89,56 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
   } catch (error) {
     console.error('Lỗi khi lấy hồ sơ bác sĩ:', error);
     return { success: false, message: 'Lỗi server' };
+  }
+}
+
+// ==========================================
+// 2. HÀM CẬP NHẬT HỒ SƠ BÁC SĨ
+// ==========================================
+export async function updateDoctorProfileData(formData: any) {
+  try {
+    const cookieStore = await cookies();
+    const userIdStr = cookieStore.get('user_id')?.value;
+    if (!userIdStr) return { success: false, message: 'Chưa đăng nhập' };
+    const doctorId = parseInt(userIdStr);
+
+    // 1. Cập nhật thông tin cơ bản trong bảng User
+    await prisma.user.update({
+      where: { id: doctorId },
+      data: {
+        phone: formData.phone,
+        dob: formData.dob,
+        gender: formData.gender,
+        address: formData.address,
+      }
+    });
+
+    // 2. Cập nhật (hoặc Tạo mới) thông tin chuyên môn trong bảng DoctorProfile
+    await prisma.doctorProfile.upsert({
+      where: { userId: doctorId },
+      update: {
+        specialty: formData.specialty,
+        experience: formData.experience.toString(),
+        degree: formData.degree,
+        university: formData.university,
+        languages: formData.languages,
+      },
+      create: {
+        userId: doctorId,
+        specialty: formData.specialty,
+        experience: formData.experience.toString(),
+        degree: formData.degree,
+        university: formData.university,
+        languages: formData.languages,
+        rating: 5.0,
+        price: 150000,
+        imagePrefix: "B"
+      }
+    });
+
+    return { success: true, message: 'Cập nhật hồ sơ thành công!' };
+  } catch (error) {
+    console.error('Lỗi khi cập nhật hồ sơ:', error);
+    return { success: false, message: 'Lỗi server khi lưu dữ liệu' };
   }
 }
