@@ -1,4 +1,3 @@
-// app/actions/appointment.ts
 'use server';
 
 import prisma from '@/lib/prisma';
@@ -13,22 +12,37 @@ export async function getPatientAppointmentData() {
     
     const userId = parseInt(userIdStr);
 
-    const [user, doctors, history] = await Promise.all([
-      // Lấy thông tin user hiện tại
-      prisma.user.findUnique({ 
+    let user = await prisma.user.findUnique({ 
+      where: { id: userId },
+      select: { id: true, fullName: true, patientCode: true } 
+    });
+
+    if (user && (!user.patientCode || user.patientCode === 'BN-NEW')) {
+      const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${user.id.toString().padStart(4, '0')}`;
+      await prisma.user.update({
         where: { id: userId },
-        select: { fullName: true, patientCode: true } 
-      }),
-      // Lấy danh sách bác sĩ
+        data: { patientCode: generatedCode }
+      });
+      user.patientCode = generatedCode;
+    }
+
+    const [doctors, history] = await Promise.all([
       prisma.user.findMany({
         where: { role: 'DOCTOR' },
         include: { doctorProfile: true }
       }),
-      // Lấy lịch sử khám của bệnh nhân
       prisma.appointment.findMany({
         where: { patientId: userId },
         orderBy: { createdAt: 'desc' },
-        include: { doctor: { select: { fullName: true } } }
+        include: { 
+          doctor: { 
+            select: { 
+              fullName: true, 
+              avatar: true, 
+              doctorProfile: { select: { specialty: true } } 
+            } 
+          } 
+        }
       })
     ]);
 
@@ -39,7 +53,7 @@ export async function getPatientAppointmentData() {
   }
 }
 
-// 2. Lấy các khung giờ ĐÃ BỊ ĐẶT của 1 bác sĩ trong 1 ngày cụ thể
+// 2. Lấy các khung giờ ĐÃ BỊ ĐẶT
 export async function getBookedTimes(doctorId: number, date: string) {
   try {
     const appointments = await prisma.appointment.findMany({
@@ -52,23 +66,19 @@ export async function getBookedTimes(doctorId: number, date: string) {
   }
 }
 
-// 3. XÁC NHẬN ĐẶT LỊCH (Lưu vào Database)
+// 3. XÁC NHẬN ĐẶT LỊCH
 export async function createAppointment(data: { doctorId: number, specialty: string, date: string, time: string, reason: string }) {
   try {
     const cookieStore = await cookies();
     const userIdStr = cookieStore.get('user_id')?.value;
     if (!userIdStr) return { success: false, message: 'Chưa đăng nhập' };
 
-    // Kiểm tra chống trùng lịch (nhỡ có ai vừa đặt trước vài giây)
-    const existing = await prisma.appointment.findFirst({
-      where: { doctorId: data.doctorId, bookingDate: data.date, bookingTime: data.time, status: { not: 'ĐÃ HỦY' } }
-    });
+    // Cho phép đặt trùng giờ theo yêu cầu
 
-    if (existing) {
-      return { success: false, message: 'Khung giờ này vừa có người đặt. Vui lòng chọn giờ khác!' };
-    }
 
-    // Tạo lịch mới
+    // Sinh mã lịch hẹn tự động, ví dụ: LH + 6 số cuối timestamp + 2 số random
+    const generatedCode = `LH${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+
     const newApt = await prisma.appointment.create({
       data: {
         patientId: parseInt(userIdStr),
@@ -77,14 +87,111 @@ export async function createAppointment(data: { doctorId: number, specialty: str
         bookingDate: data.date,
         bookingTime: data.time,
         reason: data.reason,
-        status: 'CHỜ XÁC NHẬN'
+        status: 'CHỜ XÁC NHẬN',
+        appointmentCode: generatedCode
       }
     });
 
-    // Trả về mã lịch khám
-    return { success: true, appointmentCode: `LK260${newApt.id}` };
+    return { success: true, appointmentCode: generatedCode };
   } catch (error) {
     console.error('Lỗi đặt lịch:', error);
     return { success: false, message: 'Không thể đặt lịch lúc này.' };
+  }
+}
+
+// 4. LẤY HỒ SƠ CÔNG KHAI CỦA BÁC SĨ (MỚI THÊM)
+export async function getPublicDoctorProfile(doctorId: number) {
+  try {
+    const doctor = await prisma.user.findUnique({
+      where: { id: doctorId, role: 'DOCTOR' },
+      include: {
+        doctorProfile: true,
+        appointmentsAsDoctor: { select: { id: true, status: true } },
+      }
+    });
+
+    if (!doctor) return { success: false, message: 'Không tìm thấy thông tin bác sĩ này' };
+
+    const uniquePatients = new Set(await prisma.appointment.findMany({
+      where: { doctorId: doctor.id },
+      select: { patientId: true }
+    }));
+
+    const dProfile = doctor.doctorProfile || {} as any;
+
+    let parsedSchedule = [];
+    if (dProfile.schedule) {
+      if (typeof dProfile.schedule === 'string') {
+        try { parsedSchedule = JSON.parse(dProfile.schedule); } catch (e) {}
+      } else if (Array.isArray(dProfile.schedule)) {
+        parsedSchedule = dProfile.schedule;
+      }
+    }
+
+    const profileData = {
+      id: `BS${doctor.id.toString().padStart(3, '0')}`,
+      fullName: doctor.fullName,
+      gender: doctor.gender || 'Nam',
+      avatar: doctor.avatar || `https://ui-avatars.com/api/?name=${doctor.fullName.replace(/ /g, '+')}&background=2563EB&color=fff`,
+      
+      specialty: dProfile.specialty || 'Đa khoa',
+      status: dProfile.status || 'Đang làm việc',
+      degree: dProfile.degree || 'Chưa cập nhật',
+      university: dProfile.university || 'Chưa cập nhật',
+      experience: parseInt(dProfile.experience) || 0,
+      languages: dProfile.languages || 'Chưa cập nhật',
+      rating: dProfile.rating || 5.0,
+      
+      certificates: dProfile.certificates || [],
+      schedule: parsedSchedule,
+      
+      stats: {
+        totalPatients: uniquePatients.size,
+        totalAppointments: doctor.appointmentsAsDoctor.length,
+      },
+      reviews: [
+        { id: 1, name: 'Trần Thị H.', rating: 5, comment: 'Bác sĩ rất tận tình, khám kỹ và dặn dò chu đáo.', date: 'Gần đây' },
+        { id: 2, name: 'Nguyễn Văn M.', rating: 5, comment: 'Chuyên môn cao, phòng khám sạch sẽ.', date: 'Tháng trước' }
+      ]
+    };
+
+    return { success: true, data: profileData };
+  } catch (error) {
+    return { success: false, message: 'Lỗi server' };
+  }
+}
+
+// 5. TÌM KIẾM BỆNH NHÂN THEO SĐT / CCCD / MÃ
+export async function findPatientByQuery(query: string) {
+  try {
+    const q = query.trim();
+    if (!q) return { success: false, message: 'Vui lòng nhập thông tin tìm kiếm' };
+
+    const patient = await prisma.user.findFirst({
+      where: {
+        role: 'PATIENT',
+        OR: [
+          { phone: q },
+          { cccd: q },
+          { patientCode: q }
+        ]
+      },
+      select: {
+        fullName: true,
+        phone: true,
+        cccd: true,
+        address: true,
+        patientCode: true
+      }
+    });
+
+    if (!patient) {
+      return { success: false, message: 'Không tìm thấy hồ sơ phù hợp' };
+    }
+
+    return { success: true, data: patient };
+  } catch (error) {
+    console.error('Lỗi tìm kiếm bệnh nhân:', error);
+    return { success: false, message: 'Lỗi server' };
   }
 }

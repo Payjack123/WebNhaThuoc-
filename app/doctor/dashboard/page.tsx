@@ -1,51 +1,26 @@
 'use client';
 
-import { Star } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  LayoutDashboard, CalendarDays, Users, FileText, Pill, TestTube, 
-  Bot, BarChart3, Bell, User, Settings, LogOut, Search, Plus, 
-  CheckCircle2, Clock, AlertTriangle, ArrowRight, Activity, 
-  Printer, Mic, ChevronRight, FileSpreadsheet, Stethoscope, Save, 
-  Megaphone, Loader2
+  CalendarDays, CheckCircle2, Clock, Users, Activity, 
+  ArrowRight, Search, Bell, MoreVertical, FileText, Pill,
+  Stethoscope, User, Calendar, Megaphone
 } from 'lucide-react';
-
-import { getDoctorDashboardData, saveExamination, savePrescription, saveLabRequests } from '@/app/doctor/dashboard/actions';
+import DoctorSidebar from "@/app/doctor/Sidebar";
+import { getDoctorDashboardData } from '@/app/doctor/dashboard/actions';
 
 export default function DoctorDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('exam'); 
-  
-  // States xử lý dữ liệu backend
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // State lưu Bệnh nhân đang được click để khám
-  const [activeApt, setActiveApt] = useState<any>(null);
 
-  // States Form Khám
-  const [examForm, setExamForm] = useState({ symptoms: '', diagnosis: '', notes: '' });
-  
-  // States Form Thuốc
-  const [medList, setMedList] = useState<any[]>([]);
-  const [currentMed, setCurrentMed] = useState({ name: 'Paracetamol 500mg', dosage: '', time: '', qty: '' });
-
-  // States Form Xét nghiệm
-  const [selectedTests, setSelectedTests] = useState<string[]>(['Xét nghiệm máu (CBC)']);
-  const [labNotes, setLabNotes] = useState('');
-
-  // 1. Fetch dữ liệu khi Load trang
   useEffect(() => {
     const fetchDashboard = async () => {
       const res = await getDoctorDashboardData();
       if (res.success && res.data) {
         setDashboardData(res.data);
-        // Mặc định chọn ca khám đầu tiên chưa hoàn thành
-        const pendingApt = res.data.appointments.find((a: any) => a.status !== 'HOÀN THÀNH');
-        if (pendingApt) setActiveApt(pendingApt);
       } else {
         router.push('/login');
       }
@@ -54,440 +29,412 @@ export default function DoctorDashboard() {
     fetchDashboard();
   }, [router]);
 
-  const handleLogout = () => router.push('/login');
-
-  // --- CÁC HÀM XỬ LÝ LƯU DỮ LIỆU ---
-  const handleSaveExam = async () => {
-    if (!activeApt || !examForm.diagnosis) return alert('Vui lòng nhập chẩn đoán!');
-    setIsSubmitting(true);
-    const res = await saveExamination({
-      appointmentId: activeApt.id,
-      patientId: activeApt.patientId,
-      symptoms: examForm.symptoms,
-      diagnosis: examForm.diagnosis,
-      notes: examForm.notes
-    });
-    setIsSubmitting(false);
-    if (res.success) {
-      alert(res.message);
-      window.location.reload(); 
-    } else {
-      alert(res.message);
-    }
-  };
-
-  const handleAddMed = () => {
-    if (!currentMed.dosage || !currentMed.qty) return;
-    setMedList([...medList, { id: Date.now(), ...currentMed }]);
-    setCurrentMed({ name: 'Paracetamol 500mg', dosage: '', time: '', qty: '' });
-  };
-
-  const handleSavePrescription = async () => {
-    if (medList.length === 0) return alert('Chưa có thuốc nào trong đơn!');
-    setIsSubmitting(true);
-    const res = await savePrescription(activeApt.patientId, medList);
-    setIsSubmitting(false);
-    if (res.success) {
-      alert(res.message);
-      setMedList([]);
-    } else alert(res.message);
-  };
-
-  const handleToggleTest = (testName: string) => {
-    setSelectedTests(prev => 
-      prev.includes(testName) ? prev.filter(t => t !== testName) : [...prev, testName]
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="w-10 h-10 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
-  };
-
-  const handleSaveLabs = async () => {
-    if (selectedTests.length === 0) return alert('Chọn ít nhất 1 loại xét nghiệm');
-    setIsSubmitting(true);
-    const res = await saveLabRequests(activeApt.patientId, selectedTests, labNotes);
-    setIsSubmitting(false);
-    if (res.success) {
-      alert(res.message);
-      setSelectedTests(['Xét nghiệm máu (CBC)']);
-      setLabNotes('');
-    } else alert(res.message);
-  };
-
-  if (isLoading || !dashboardData) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
   }
 
   const { doctor, stats, appointments } = dashboardData;
 
+  // Giả lập dữ liệu cho biểu đồ và timeline vì backend chưa có
+  const mockTimeline = [
+    { time: '07:00 - 07:30', title: 'Họp giao ban khoa', icon: Users, color: 'text-gray-500', bg: 'bg-white border-gray-200' },
+    { time: '07:30 - 11:30', title: 'Khám bệnh', subtitle: '14 bệnh nhân', icon: Stethoscope, color: 'text-[#2563EB]', bg: 'bg-blue-50 border-blue-200' },
+    { time: '11:30 - 13:30', title: 'Nghỉ trưa', icon: Pill, color: 'text-green-600', bg: 'bg-green-50 border-green-200' },
+    { time: '13:30 - 17:00', title: 'Khám bệnh', subtitle: '10 bệnh nhân', icon: Stethoscope, color: 'text-[#2563EB]', bg: 'bg-blue-50 border-blue-200' },
+    { time: '17:00 - 17:30', title: 'Tổng kết cuối ngày', icon: Calendar, color: 'text-gray-500', bg: 'bg-white border-gray-200' },
+  ];
+
   return (
-    <div className="min-h-screen flex bg-gray-50 font-sans text-gray-800">
-      
-      {/* ==========================================
-          1. SIDEBAR (Menu trái)
-      ========================================== */}
-      <aside className="w-64 bg-[#172554] text-gray-300 flex flex-col h-screen sticky top-0">
-        <div className="h-20 flex items-center justify-center border-b border-blue-900/50">
-          <div className="flex items-center gap-2 text-white">
-            <Activity className="text-orange-500" size={28}/>
-            <span className="font-bold text-xl tracking-tight">HEALTHCARE AI</span>
-          </div>
-        </div>
+    <div className="min-h-screen flex bg-[#F8FAFC] font-sans text-gray-800">
+      <DoctorSidebar activePage="dashboard" />
 
-        <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
-          <Link href="/doctor/dashboard" className="flex items-center gap-3 px-4 py-3 bg-[#2563EB] text-white rounded-xl font-medium shadow-md">
-            <LayoutDashboard size={20}/> Dashboard
-          </Link>
-          <Link href="/doctor/appointments" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <CalendarDays size={20}/> Lịch khám
-          </Link>
-          <Link href="/doctor/patients" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <Users size={20}/> Bệnh nhân
-          </Link>
-          <Link href="/doctor/records" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <FileText size={20}/> Hồ sơ bệnh án
-          </Link>
-          <Link href="/doctor/prescriptions" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <Pill size={20}/> Đơn thuốc
-          </Link>
-          <Link href="/doctor/lab-tests" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <TestTube size={20}/> Xét nghiệm
-          </Link>        
-          <Link href="/doctor/reports" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <BarChart3 size={20}/> Báo cáo
-          </Link>
-        </div>
-
-        <div className="p-4 border-t border-blue-900/50 space-y-1">
-          <Link href="#" className="flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition text-sm">
-            <Bell size={18}/> Thông báo <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
-          </Link>
-          <Link href="/doctor/profile" className="flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition text-sm">
-            <User size={18}/> Hồ sơ bác sĩ
-          </Link>
-          <Link href="#" className="flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition text-sm">
-            <Settings size={18}/> Cài đặt
-          </Link>
-
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition text-sm mt-2">
-            <LogOut size={18}/> Đăng xuất
-          </button>
-          <p className="text-[10px] text-blue-400/50 text-center pt-4">Phát triển bởi Phạm Đức Mạnh</p>
-        </div>
-      </aside>
-
-      {/* ==========================================
-          2. MAIN CONTENT
-      ========================================== */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        
-        {/* TOP HEADER */}
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">👋 Xin chào, {doctor.fullName}</h1>
-            <p className="text-sm text-gray-500">Chuyên khoa {doctor.doctorProfile?.specialty || 'Đa khoa'} • <span className="text-[#2563EB] font-medium">Hôm nay có {stats.todayCount} lịch khám</span></p>
+        {/* HEADER CỐ ĐỊNH */}
+        <header className="bg-white border-b border-gray-100 px-8 h-20 shrink-0 flex items-center justify-between sticky top-0 z-10">
+          <div className="relative w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
+            <input 
+              type="text" 
+              placeholder="Tìm bệnh nhân, mã hồ sơ, lịch khám..." 
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
+            />
           </div>
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <input type="text" placeholder="Tìm kiếm bệnh nhân..." className="pl-10 pr-4 py-2 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-[#2563EB] w-64"/>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16}/>
+            <div className="flex gap-4">
+              <button className="relative text-gray-400 hover:text-gray-600 transition">
+                <Bell size={20}/>
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">3</span>
+              </button>
             </div>
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-bold text-gray-900">{doctor.fullName}</p>
-                <div className="flex text-yellow-400 text-xs justify-end">
-                  <Star fill="currentColor" size={12}/><Star fill="currentColor" size={12}/><Star fill="currentColor" size={12}/><Star fill="currentColor" size={12}/><Star fill="currentColor" size={12}/>
-                </div>
+            <div className="h-8 w-px bg-gray-200"></div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-bold text-gray-900">BS. {doctor.fullName}</p>
+                <p className="text-xs text-gray-500">{doctor.doctorProfile?.specialty || 'Khoa Nội tổng quát'}</p>
               </div>
-              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop" alt="Doctor" className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"/>
+              <img src={doctor.doctorProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.fullName)}&background=2563EB&color=fff`} alt="Doctor" className="w-10 h-10 rounded-full border border-gray-200 object-cover"/>
             </div>
           </div>
         </header>
 
-        {/* SCROLLABLE DASHBOARD AREA */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        {/* NỘI DUNG SCROLL */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           
-          {/* 3. THỐNG KÊ (4 Cards) */}
-          <div className="grid grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center"><CalendarDays size={24}/></div>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-gray-900">Xin chào, BS. {doctor.fullName}!</h1>
+            <p className="text-sm text-gray-500 mt-1">Chúc bạn một ngày làm việc hiệu quả.</p>
+          </div>
+
+          {/* 1. TOP STATS (5 CARDS) */}
+          <div className="grid grid-cols-5 gap-4 mb-8">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
+                  <CalendarDays size={20}/>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase">Lịch khám hôm nay</p>
+                </div>
+              </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Lịch khám hôm nay</p>
-                <p className="text-2xl font-black text-gray-900">{stats.todayCount}</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black text-gray-900">{stats.todayCount}</span>
+                  <span className="text-sm text-gray-500 mb-1 font-medium">bệnh nhân</span>
+                </div>
+                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] hover:underline flex items-center gap-1 mt-2">
+                  Xem chi tiết <ArrowRight size={12}/>
+                </Link>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center"><Users size={24}/></div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={20}/>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase">Đã khám</p>
+                </div>
+              </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Tổng bệnh nhân</p>
-                <p className="text-2xl font-black text-gray-900">{stats.totalPatients}</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black text-gray-900">{Math.floor(stats.todayCount * 0.66)}</span>
+                  <span className="text-sm text-gray-500 mb-1 font-medium">bệnh nhân</span>
+                </div>
+                <p className="text-xs font-bold text-gray-400 mt-2">66.7%</p>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center"><Pill size={24}/></div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shrink-0">
+                  <Clock size={20}/>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase">Đang chờ khám</p>
+                </div>
+              </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Đơn thuốc đã kê</p>
-                <p className="text-2xl font-black text-gray-900">{stats.prescriptionsCount}</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black text-gray-900">{Math.floor(stats.todayCount * 0.22)}</span>
+                  <span className="text-sm text-gray-500 mb-1 font-medium">bệnh nhân</span>
+                </div>
+                <p className="text-xs font-bold text-gray-400 mt-2">22.2%</p>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center"><TestTube size={24}/></div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
+                  <CalendarDays size={20}/>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase">Chưa khám</p>
+                </div>
+              </div>
               <div>
-                <p className="text-sm text-gray-500 font-medium">Xét nghiệm chờ KQ</p>
-                <p className="text-2xl font-black text-gray-900">{stats.pendingLabsCount}</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black text-gray-900">{Math.floor(stats.todayCount * 0.11)}</span>
+                  <span className="text-sm text-gray-500 mb-1 font-medium">bệnh nhân</span>
+                </div>
+                <p className="text-xs font-bold text-gray-400 mt-2">11.1%</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center shrink-0">
+                  <Activity size={20}/>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase">Tổng bệnh nhân</p>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-black text-gray-900">{stats.totalPatients}</span>
+                  <span className="text-xs text-gray-500 mb-1.5 font-medium block ml-1">(Tháng này)</span>
+                </div>
+                <p className="text-xs font-bold text-green-600 mt-2 flex items-center gap-1">↑ 12% <span className="text-gray-400 font-normal">so với tháng trước</span></p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* 2. MIDDLE ROW (3 COLUMNS) */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
             
-            {/* 4. LỊCH KHÁM HÔM NAY (Cột trái - 2/3) */}
-            <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="font-bold text-lg text-gray-900">Lịch khám hôm nay</h2>
-                <div className="flex gap-2">
-                  <select className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50 focus:outline-none">
-                    <option>Hôm nay</option>
-                    <option>Ngày mai</option>
-                    <option>Tuần này</option>
-                  </select>
-                </div>
+            {/* CỘT 1: LỊCH KHÁM HÔM NAY */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Lịch khám hôm nay</h2>
+                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] hover:underline">Xem tất cả</Link>
               </div>
-              <div className="p-6 flex-1 h-[400px] overflow-y-auto custom-scrollbar">
-                <div className="space-y-4">
-                  {appointments.length > 0 ? appointments.map((apt: any) => {
+              <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                <div className="space-y-1">
+                  {appointments.slice(0, 5).map((apt: any) => {
                     const isCompleted = apt.status === 'HOÀN THÀNH';
-                    const isActive = activeApt?.id === apt.id;
-                    
                     return (
-                      <div 
-                        key={apt.id} 
-                        onClick={() => !isCompleted && setActiveApt(apt)}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition cursor-pointer ${
-                          isCompleted ? 'border-gray-100 bg-gray-50 opacity-60' : 
-                          isActive ? 'border-[#2563EB] bg-blue-50 ring-1 ring-blue-200' : 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`w-14 h-14 bg-white rounded-xl shadow-sm flex flex-col items-center justify-center border ${isCompleted ? 'border-gray-200' : isActive ? 'border-[#2563EB] text-[#2563EB]' : 'border-yellow-200 text-yellow-600'}`}>
-                            <span className="text-xs font-bold">{apt.bookingTime}</span>
-                          </div>
+                      <div key={apt.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-[#2563EB] w-10 shrink-0">{apt.bookingTime}</span>
+                          <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(apt.patient.fullName)}&background=random`} alt="Avatar" className="w-10 h-10 rounded-full border border-gray-200" />
                           <div>
-                            <h4 className={`font-bold ${isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                              {apt.patient.fullName} <span className="text-xs font-normal text-gray-500 ml-2">24 tuổi • Nam</span>
-                            </h4>
-                            <p className="text-sm text-gray-600 mt-1">Lý do: {apt.reason || 'Khám tổng quát'}</p>
+                            <h4 className="font-bold text-sm text-gray-900">{apt.patient.fullName}</h4>
+                            <p className="text-[11px] text-gray-500 mt-0.5">24 tuổi • Nam</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[11px] text-gray-600 max-w-[80px] truncate">{apt.reason || 'Khám tổng quát'}</p>
                           {isCompleted ? (
-                            <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle2 size={12}/> Đã hoàn thành</span>
-                          ) : isActive ? (
-                            <span className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Clock size={12}/> Đang khám</span>
+                            <span className="bg-green-50 text-green-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">Đã khám</span>
                           ) : (
-                            <span className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><AlertTriangle size={12}/> Đang chờ</span>
+                            <span className="bg-blue-50 text-[#2563EB] px-2 py-1 rounded text-[10px] font-bold shrink-0">Chờ khám</span>
                           )}
-                          {!isCompleted && (
-                            <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition">
-                              Chi tiết
-                            </button>
-                          )}
+                          <MoreVertical size={16} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0"/>
                         </div>
                       </div>
                     )
-                  }) : (
-                    <div className="text-center py-10 text-gray-500">Không có ca khám nào hôm nay.</div>
-                  )}
+                  })}
+                </div>
+              </div>
+              <div className="p-3 border-t border-gray-100 shrink-0 flex justify-center">
+                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1 w-full justify-center">
+                  Xem lịch đầy đủ <ArrowRight size={14}/>
+                </Link>
+              </div>
+            </div>
+
+            {/* CỘT 2: LỊCH LÀM VIỆC HÔM NAY (TIMELINE) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Lịch làm việc hôm nay</h2>
+                <button className="text-xs font-bold text-[#2563EB] hover:underline">Xem lịch tuần</button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div className="relative border-l border-gray-200 ml-3 space-y-6">
+                  {mockTimeline.map((item, index) => (
+                    <div key={index} className="relative pl-6">
+                      <div className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${index === 1 ? 'bg-[#2563EB]' : 'bg-gray-300 border-2 border-white'}`}></div>
+                      <div className="flex flex-col gap-2 xl:flex-row xl:items-start">
+                        <span className="text-xs font-bold text-gray-500 shrink-0 w-24 pt-1">{item.time}</span>
+                        <div className={`flex-1 border rounded-xl p-3 flex items-center gap-3 ${item.bg}`}>
+                          <item.icon size={18} className={item.color} />
+                          <div>
+                            <p className={`text-sm font-bold ${item.color}`}>{item.title}</p>
+                            {item.subtitle && <p className="text-[11px] text-gray-500 mt-0.5">{item.subtitle}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* 5. AI HỖ TRỢ BÁC SĨ (Cột phải - 1/3) - GIỮ NGUYÊN */}
-            <div className="xl:col-span-1 bg-gradient-to-b from-indigo-50 to-white rounded-2xl shadow-sm border border-indigo-100 flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10"><Bot size={120}/></div>
-              <div className="p-6 border-b border-indigo-100 relative z-10 flex items-center gap-2">
-                <Bot className="text-indigo-600" size={24}/>
-                <h2 className="font-bold text-lg text-indigo-900">AI Assistant</h2>
-                <span className="ml-auto bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider animate-pulse">Beta</span>
+            {/* CỘT 3: THỐNG KÊ KHÁM BỆNH */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Thống kê khám bệnh</h2>
+                <select className="text-[11px] font-bold border border-gray-200 rounded-lg px-2 py-1 bg-white outline-none cursor-pointer">
+                  <option>Tháng 8/2026</option>
+                  <option>Tháng 7/2026</option>
+                </select>
               </div>
-              <div className="p-6 flex-1 relative z-10 space-y-5">
-                <div>
-                  <label className="text-xs font-bold text-indigo-900 uppercase tracking-wider">Phân tích triệu chứng</label>
-                  <div className="mt-2 bg-white rounded-xl p-3 border border-indigo-100 text-sm flex items-center gap-2 shadow-sm">
-                    <Mic className="text-indigo-400" size={16}/> "{activeApt?.reason || 'Bệnh nhân sốt cao 39 độ, đau rát họng...'}"
+              <div className="flex-1 p-5 flex flex-col justify-between">
+                {/* Giả lập biểu đồ SVG */}
+                <div className="w-full relative min-h-[160px]">
+                  <svg viewBox="0 0 400 150" className="w-full h-full preserve-aspect-ratio-none">
+                    {/* Grid lines */}
+                    <line x1="0" y1="30" x2="400" y2="30" stroke="#f3f4f6" strokeWidth="1"/>
+                    <line x1="0" y1="70" x2="400" y2="70" stroke="#f3f4f6" strokeWidth="1"/>
+                    <line x1="0" y1="110" x2="400" y2="110" stroke="#f3f4f6" strokeWidth="1"/>
+                    
+                    {/* Graph line */}
+                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round"/>
+                    
+                    {/* Area under line */}
+                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50 L 400 150 L 0 150 Z" fill="url(#blue-gradient)" opacity="0.1"/>
+                    
+                    {/* Data points */}
+                    <circle cx="0" cy="100" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
+                    <circle cx="100" cy="60" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
+                    <circle cx="200" cy="40" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
+                    <circle cx="300" cy="20" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
+                    <circle cx="400" cy="50" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
+                    
+                    <defs>
+                      <linearGradient id="blue-gradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#2563EB" />
+                        <stop offset="100%" stopColor="transparent" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  {/* Labels x-axis */}
+                  <div className="absolute bottom-0 left-0 w-full flex justify-between text-[10px] text-gray-400 font-bold px-2">
+                    <span>01/08</span>
+                    <span>05/08</span>
+                    <span>10/08</span>
+                    <span>15/08</span>
+                    <span>20/08</span>
+                    <span>25/08</span>
+                    <span>30/08</span>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <div className="border border-gray-100 bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-xl font-black text-[#2563EB]">{stats.totalPatients}</p>
+                    <p className="text-[10px] text-gray-500 font-medium mt-1">Tổng lượt khám</p>
+                  </div>
+                  <div className="border border-gray-100 bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-xl font-black text-gray-900">21.7</p>
+                    <p className="text-[10px] text-gray-500 font-medium mt-1">Trung bình/ngày</p>
+                  </div>
+                  <div className="border border-green-100 bg-green-50 rounded-xl p-3 text-center flex flex-col justify-center items-center">
+                    <p className="text-lg font-black text-green-600">↑ 12%</p>
+                    <p className="text-[9px] text-gray-500 font-medium mt-1 leading-tight">So với tháng trước</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* 3. BOTTOM ROW (3 COLUMNS) */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            {/* CỘT 1: DANH SÁCH CHỜ KHÁM */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Danh sách chờ khám</h2>
+                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] hover:underline">Xem tất cả</Link>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="space-y-2">
+                  {appointments.filter((a: any) => a.status !== 'HOÀN THÀNH').slice(0, 4).map((apt: any, i: number) => (
+                    <div key={apt.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition">
+                      <span className="text-xs font-bold text-gray-400 w-4">{i + 1}</span>
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(apt.patient.fullName)}&background=random`} alt="Avatar" className="w-8 h-8 rounded-full border border-gray-200" />
+                      <div className="flex-1">
+                        <h4 className="font-bold text-sm text-gray-900">{apt.patient.fullName}</h4>
+                        <p className="text-[11px] text-gray-500">24 tuổi • Nữ</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] font-bold text-gray-700">{apt.reason || 'Khám tổng quát'}</p>
+                        <p className="text-[10px] text-gray-400 flex items-center gap-1 justify-end mt-0.5"><Clock size={10}/> Đăng ký lúc {apt.bookingTime}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-100 shrink-0">
+                <button className="w-full py-2.5 bg-blue-50 text-[#2563EB] rounded-xl font-bold text-sm hover:bg-blue-100 transition flex items-center justify-center gap-2">
+                  <Megaphone size={16}/> Gọi bệnh nhân tiếp theo
+                </button>
+              </div>
+            </div>
+
+            {/* CỘT 2: HỒ SƠ BỆNH ÁN MỚI */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Hồ sơ bệnh án mới</h2>
+                <Link href="/doctor/records" className="text-xs font-bold text-[#2563EB] hover:underline">Xem tất cả</Link>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="space-y-2">
+                  {appointments.filter((a: any) => a.status === 'HOÀN THÀNH').slice(0, 4).map((apt: any) => (
+                    <div key={apt.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition">
+                      <div className="flex items-center gap-3">
+                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(apt.patient.fullName)}&background=random`} alt="Avatar" className="w-8 h-8 rounded-full border border-gray-200" />
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-900">{apt.patient.fullName}</h4>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{new Date().toLocaleDateString('vi-VN')} {apt.bookingTime}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] font-bold text-gray-700">{apt.reason || 'Viêm họng cấp'}</p>
+                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md inline-block mt-0.5">Đã tạo</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-100 shrink-0">
+                <Link href="/doctor/records" className="w-full py-2.5 bg-white border border-blue-200 text-[#2563EB] rounded-xl font-bold text-sm hover:bg-blue-50 transition flex items-center justify-center gap-2">
+                  Tạo hồ sơ mới <ArrowRight size={14}/>
+                </Link>
+              </div>
+            </div>
+
+            {/* CỘT 3: THAO TÁC NHANH (4 NÚT) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-base text-gray-900">Thao tác nhanh</h2>
+              </div>
+              <div className="flex-1 p-5 grid grid-cols-2 grid-rows-2 gap-4">
                 
-                <div className="space-y-3">
-                  <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1"><Activity size={14}/> Gợi ý Chẩn đoán</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-indigo-200 cursor-pointer hover:bg-indigo-200">Viêm họng cấp (85%)</span>
-                    <span className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-indigo-200 cursor-pointer hover:bg-indigo-200">Viêm Amidan (70%)</span>
-                    <span className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 cursor-pointer hover:bg-gray-200">Test Covid-19</span>
-                  </div>
-                </div>
+                <Link href="/doctor/appointments" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
+                  <Stethoscope size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Khám bệnh</h3>
+                  <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo hồ sơ khám</p>
+                </Link>
 
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                  <p className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-2 flex items-center gap-1"><AlertTriangle size={14}/> Khuyến nghị & Cảnh báo</p>
-                  <p className="text-sm text-orange-900 mb-2">Đề xuất chỉ định xét nghiệm Công thức máu (CBC).</p>
-                  <p className="text-xs text-red-600 font-medium">⚠ Cảnh báo: Bệnh nhân có tiền sử dị ứng với Penicillin.</p>
-                </div>
+                <Link href="/doctor/prescriptions/create" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
+                  <Pill size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Đơn thuốc</h3>
+                  <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo đơn thuốc mới</p>
+                </Link>
 
-                <p className="text-[10px] text-gray-400 text-center italic mt-auto">
-                  *AI chỉ hỗ trợ gợi ý và tóm tắt, không thay thế quyết định chẩn đoán lâm sàng của Bác sĩ.
-                </p>
+                <Link href="/doctor/records" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
+                  <FileText size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Hồ sơ bệnh án</h3>
+                  <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo hồ sơ mới</p>
+                </Link>
+
+                <Link href="/doctor/patients" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
+                  <User size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Tìm bệnh nhân</h3>
+                  <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tra cứu hồ sơ bệnh nhân</p>
+                </Link>
+
               </div>
             </div>
+
           </div>
 
-          {/* 6. KHU VỰC KHÁM BỆNH & HỒ SƠ */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {activeApt ? (
-              <>
-                {/* Context Bệnh nhân đang khám */}
-                <div className="bg-blue-50/50 p-4 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#2563EB] text-white rounded-full flex items-center justify-center font-bold text-xl shadow-md uppercase">
-                      {activeApt.patient.fullName.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-lg">{activeApt.patient.fullName} <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded ml-2">Đang khám</span></h3>
-                      <p className="text-sm text-gray-500">Mã: {activeApt.patient.patientCode} • 24 tuổi • BHYT Hợp lệ • Tiền sử: Dị ứng Penicillin</p>
-                    </div>
-                  </div>
-                  <button className="flex items-center gap-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-                    <Printer size={16}/> Xuất hồ sơ PDF
-                  </button>
-                </div>
-
-                {/* Tabs Điều hướng */}
-                <div className="flex border-b border-gray-200 px-6">
-                  <button onClick={() => setActiveTab('exam')} className={`py-4 px-6 font-bold text-sm border-b-2 transition ${activeTab === 'exam' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Nhập kết quả khám</button>
-                  <button onClick={() => setActiveTab('prescription')} className={`py-4 px-6 font-bold text-sm border-b-2 transition ${activeTab === 'prescription' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Kê đơn thuốc</button>
-                  <button onClick={() => setActiveTab('lab')} className={`py-4 px-6 font-bold text-sm border-b-2 transition ${activeTab === 'lab' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Yêu cầu xét nghiệm</button>
-                  <button className="py-4 px-6 font-bold text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition ml-auto flex items-center gap-1">Lịch sử khám <ChevronRight size={16}/></button>
-                </div>
-
-                {/* Nội dung Tabs */}
-                <div className="p-6 bg-gray-50/30">
-                  
-                  {/* TAB 1: NHẬP KẾT QUẢ KHÁM */}
-                  {activeTab === 'exam' && (
-                    <div className="space-y-6 max-w-4xl">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Triệu chứng lâm sàng</label>
-                        <textarea value={examForm.symptoms} onChange={e => setExamForm({...examForm, symptoms: e.target.value})} rows={3} className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] focus:outline-none bg-white" placeholder="Mô tả triệu chứng..."></textarea>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Chẩn đoán <span className="text-red-500">*</span></label>
-                        <input value={examForm.diagnosis} onChange={e => setExamForm({...examForm, diagnosis: e.target.value})} type="text" className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] focus:outline-none bg-white" placeholder="VD: Viêm họng cấp (J00)"/>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Lời dặn của bác sĩ</label>
-                        <textarea value={examForm.notes} onChange={e => setExamForm({...examForm, notes: e.target.value})} rows={2} className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] focus:outline-none bg-white" placeholder="Kiêng ăn uống đồ lạnh..."></textarea>
-                      </div>
-                      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition">Lưu nháp</button>
-                        <button disabled={isSubmitting} onClick={handleSaveExam} className="bg-[#2563EB] text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition flex items-center gap-2 disabled:opacity-50">
-                          {isSubmitting ? <Loader2 size={18} className="animate-spin"/> : <Save size={18}/>} Lưu bệnh án
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 2: KÊ ĐƠN THUỐC */}
-                  {activeTab === 'prescription' && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-12 gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm items-end">
-                        <div className="col-span-4">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tên thuốc</label>
-                          <select value={currentMed.name} onChange={e => setCurrentMed({...currentMed, name: e.target.value})} className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2563EB] outline-none">
-                            <option>Paracetamol 500mg</option>
-                            <option>Amoxicillin 500mg</option>
-                            <option>Vitamin C sủi</option>
-                          </select>
-                        </div>
-                        <div className="col-span-3">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Liều dùng</label>
-                          <input value={currentMed.dosage} onChange={e => setCurrentMed({...currentMed, dosage: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="Sáng 1 - Tối 1"/>
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Thời gian</label>
-                          <input value={currentMed.time} onChange={e => setCurrentMed({...currentMed, time: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="5 ngày"/>
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Số lượng</label>
-                          <input value={currentMed.qty} onChange={e => setCurrentMed({...currentMed, qty: e.target.value})} type="number" className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="10"/>
-                        </div>
-                        <div className="col-span-1">
-                          <button onClick={handleAddMed} className="w-full bg-green-500 text-white p-2.5 rounded-lg hover:bg-green-600 transition flex justify-center"><Plus size={20}/></button>
-                        </div>
-                      </div>
-
-                      <table className="w-full text-left text-sm bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                        <thead className="bg-gray-50 text-gray-600 border-b border-gray-200">
-                          <tr>
-                            <th className="p-3">Tên thuốc</th>
-                            <th className="p-3">Liều dùng</th>
-                            <th className="p-3">Thời gian</th>
-                            <th className="p-3">Số lượng</th>
-                            <th className="p-3 text-right">Thao tác</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {medList.length > 0 ? medList.map(med => (
-                            <tr key={med.id} className="border-b border-gray-100">
-                              <td className="p-3 font-medium">{med.name}</td>
-                              <td className="p-3">{med.dosage}</td>
-                              <td className="p-3">{med.time}</td>
-                              <td className="p-3 font-bold">{med.qty} viên</td>
-                              <td className="p-3 text-right"><button onClick={() => setMedList(medList.filter(m => m.id !== med.id))} className="text-red-500 hover:underline">Xóa</button></td>
-                            </tr>
-                          )) : (
-                            <tr><td colSpan={5} className="p-6 text-center text-gray-400">Chưa có thuốc nào được kê.</td></tr>
-                          )}
-                        </tbody>
-                      </table>
-
-                      <div className="flex justify-end pt-4">
-                        <button disabled={isSubmitting || medList.length === 0} onClick={handleSavePrescription} className="bg-[#2563EB] text-white px-8 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition flex items-center gap-2 disabled:opacity-50">
-                          {isSubmitting ? <Loader2 size={18} className="animate-spin"/> : <Printer size={18}/>} Lưu & In đơn thuốc
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 3: XÉT NGHIỆM */}
-                  {activeTab === 'lab' && (
-                    <div className="space-y-6 max-w-4xl">
-                      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Stethoscope className="text-[#2563EB]"/> Chọn loại xét nghiệm / Chẩn đoán hình ảnh</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {['Xét nghiệm máu (CBC)', 'Sinh hóa máu', 'X-Quang Phổi', 'Siêu âm ổ bụng'].map(test => (
-                            <label key={test} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                              <input type="checkbox" checked={selectedTests.includes(test)} onChange={() => handleToggleTest(test)} className="w-4 h-4 text-[#2563EB]" />
-                              <span className="text-sm font-medium">{test}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-bold text-gray-700 mb-2">Yêu cầu cụ thể</label>
-                          <textarea value={labNotes} onChange={e => setLabNotes(e.target.value)} rows={2} className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none" placeholder="Ghi chú thêm cho phòng xét nghiệm..."></textarea>
-                        </div>
-                      </div>
-                      <div className="flex justify-end pt-2">
-                        <button disabled={isSubmitting} onClick={handleSaveLabs} className="bg-yellow-500 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-yellow-600 transition flex items-center gap-2 disabled:opacity-50">
-                          {isSubmitting ? <Loader2 size={18} className="animate-spin"/> : <FileSpreadsheet size={18}/>} Gửi Yêu cầu Cận lâm sàng
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                <p>Vui lòng chọn một bệnh nhân từ Lịch khám để bắt đầu.</p>
-              </div>
-            )}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 mt-6">
+            <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center shrink-0">
+              <span className="font-bold text-sm">💡</span>
+            </div>
+            <p className="text-sm font-medium text-yellow-800">
+              <span className="font-bold">Lưu ý:</span> Vui lòng khám bệnh đúng giờ và cập nhật đầy đủ thông tin để đảm bảo chất lượng điều trị.
+            </p>
           </div>
-          
+
         </div>
       </main>
     </div>

@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
 // Tự định nghĩa kiểu để chống lỗi TypeScript
-export type UserRole = 'PATIENT' | 'DOCTOR' | 'ADMIN';
+export type UserRole = 'PATIENT' | 'DOCTOR' | 'ADMIN' | 'RECEPTIONIST';
 
 // 1. HÀM ĐĂNG KÝ
 export async function registerUser(fullName: string, email: string, password: string, roleInput: UserRole) {
@@ -51,7 +51,7 @@ export async function loginUser(email: string, password: string, loginRole: User
 
     // So sánh quyền người dùng chọn với quyền trong Database
     if (user.role !== loginRole) {
-      const roleName = loginRole === 'ADMIN' ? 'Quản trị viên' : loginRole === 'DOCTOR' ? 'Bác sĩ' : 'Bệnh nhân';
+      const roleName = loginRole === 'ADMIN' ? 'Quản trị viên' : loginRole === 'DOCTOR' ? 'Bác sĩ' : loginRole === 'RECEPTIONIST' ? 'Lễ tân' : 'Bệnh nhân';
       return { success: false, message: `Tài khoản này không có quyền truy cập với vai trò ${roleName}!` };
     }
 

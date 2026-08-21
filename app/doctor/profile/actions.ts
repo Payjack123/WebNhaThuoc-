@@ -4,9 +4,33 @@
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
-// ==========================================
-// 1. HÀM LẤY DỮ LIỆU HỒ SƠ BÁC SĨ
-// ==========================================
+// Hàm helper sinh lịch 7 ngày của tuần hiện tại
+function generateCurrentWeekSchedule() {
+  const today = new Date();
+  const currentDay = today.getDay(); // 0: CN, 1: T2...
+  const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // Lùi về Thứ 2
+  const monday = new Date(today.setDate(diff));
+
+  const week = [];
+  const dayNames = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    const dayName = i === 6 ? 'Chủ nhật' : `Thứ ${i + 2}`;
+    const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    
+    week.push({
+      day: `${dayName} - ${dateStr}`,
+      time: '08:00 - 17:00',
+      room: 'Chưa xếp',
+      status: 'Có lịch'
+    });
+  }
+  return week;
+}
+
+// 1. LẤY DỮ LIỆU
 export async function getDoctorProfileData(targetDoctorId?: number) {
   try {
     let doctorIdToFetch = targetDoctorId;
@@ -26,9 +50,7 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       }
     });
 
-    if (!doctor) {
-      return { success: false, message: 'Không tìm thấy tài khoản bác sĩ' };
-    }
+    if (!doctor) return { success: false, message: 'Không tìm thấy tài khoản bác sĩ' };
 
     const uniquePatients = new Set(await prisma.appointment.findMany({
       where: { doctorId: doctor.id },
@@ -42,11 +64,11 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       experience: '0',
       languages: 'Chưa cập nhật',
       rating: 5.0,
+      status: 'Đang làm việc',
       certificates: null,
       schedule: null
     };
 
-   // Map dữ liệu DB vào đúng format UI của bạn
     const profileData = {
       id: `DOC-${doctor.id.toString().padStart(3, '0')}`,
       fullName: doctor.fullName,
@@ -55,46 +77,36 @@ export async function getDoctorProfileData(targetDoctorId?: number) {
       dob: doctor.dob || 'Chưa cập nhật',
       gender: doctor.gender || 'Nam',
       address: doctor.address || 'Chưa cập nhật',
-      avatar: doctor.avatar || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=250&h=250&fit=crop',
+      avatar: doctor.avatar || `https://ui-avatars.com/api/?name=${doctor.fullName.replace(/ /g, '+')}&background=random`,
       
-      // FIX LỖI: Dùng || để bắt các giá trị null từ Database cũ
       specialty: dProfile.specialty || 'Chưa cập nhật',
+      status: dProfile.status || 'Đang làm việc',
       degree: dProfile.degree || 'Chưa cập nhật',
       university: dProfile.university || 'Chưa cập nhật',
       experience: parseInt(dProfile.experience) || 0,
       languages: dProfile.languages || 'Chưa cập nhật',
       rating: dProfile.rating || 5.0,
-      status: 'Đang làm việc',
       
-      // Lấy từ JSON, nếu null thì gán mặc định để UI không lỗi
-      certificates: dProfile.certificates || [
-        { id: 1, name: 'Bằng Bác sĩ Đa khoa', year: '2015' }
-      ],
-      schedule: dProfile.schedule || [
-        { day: 'Thứ 2', time: '07:30 - 17:00', room: 'Phòng 101' },
-        { day: 'Thứ 4', time: '07:30 - 17:00', room: 'Phòng 201' },
-      ],
+      certificates: dProfile.certificates || [{ id: 1, name: 'Bằng Bác sĩ Đa khoa', year: '2015' }],
+      // Nếu DB chưa có lịch, tự động sinh lịch tuần hiện tại
+      schedule: dProfile.schedule || generateCurrentWeekSchedule(),
+      
       stats: {
         totalPatients: uniquePatients.size,
         totalAppointments: doctor.appointmentsAsDoctor.length,
         prescriptions: 0,
         completionRate: 100
       },
-      reviews: [
-        { id: 1, name: 'Trần Thị H.', rating: 5, comment: 'Bác sĩ rất tận tình!', date: '15/08/2026' }
-      ]
+      reviews: []
     };
 
     return { success: true, data: profileData };
   } catch (error) {
-    console.error('Lỗi khi lấy hồ sơ bác sĩ:', error);
     return { success: false, message: 'Lỗi server' };
   }
 }
 
-// ==========================================
-// 2. HÀM CẬP NHẬT HỒ SƠ BÁC SĨ
-// ==========================================
+// 2. CẬP NHẬT
 export async function updateDoctorProfileData(formData: any) {
   try {
     const cookieStore = await cookies();
@@ -102,10 +114,10 @@ export async function updateDoctorProfileData(formData: any) {
     if (!userIdStr) return { success: false, message: 'Chưa đăng nhập' };
     const doctorId = parseInt(userIdStr);
 
-    // 1. Cập nhật thông tin cơ bản trong bảng User
     await prisma.user.update({
       where: { id: doctorId },
       data: {
+        fullName: formData.fullName, 
         phone: formData.phone,
         dob: formData.dob,
         gender: formData.gender,
@@ -113,32 +125,34 @@ export async function updateDoctorProfileData(formData: any) {
       }
     });
 
-    // 2. Cập nhật (hoặc Tạo mới) thông tin chuyên môn trong bảng DoctorProfile
     await prisma.doctorProfile.upsert({
       where: { userId: doctorId },
       update: {
         specialty: formData.specialty,
+        status: formData.status, 
         experience: formData.experience.toString(),
         degree: formData.degree,
         university: formData.university,
         languages: formData.languages,
+        schedule: formData.schedule, // <--- BỔ SUNG LƯU LỊCH LÀM VIỆC (JSON)
       },
       create: {
         userId: doctorId,
         specialty: formData.specialty,
+        status: formData.status || 'Đang làm việc',
         experience: formData.experience.toString(),
         degree: formData.degree,
         university: formData.university,
         languages: formData.languages,
+        schedule: formData.schedule, // <--- BỔ SUNG LƯU LỊCH LÀM VIỆC (JSON)
         rating: 5.0,
         price: 150000,
         imagePrefix: "B"
       }
     });
 
-    return { success: true, message: 'Cập nhật hồ sơ thành công!' };
+    return { success: true, message: 'Cập nhật hồ sơ và lịch làm việc thành công!' };
   } catch (error) {
-    console.error('Lỗi khi cập nhật hồ sơ:', error);
     return { success: false, message: 'Lỗi server khi lưu dữ liệu' };
   }
 }

@@ -7,35 +7,58 @@ import {
   LayoutDashboard, CalendarDays, Users, FileText, Pill, TestTube, 
   BarChart3, Bell, User, Settings, LogOut, Search, Star, 
   Activity, MapPin, Phone, Mail, Calendar, Award, Briefcase, 
-  Clock, Edit, CheckCircle2, ThumbsUp, ShieldCheck, Loader2, X, Save
+  Clock, Edit, CheckCircle2, ThumbsUp, ShieldCheck, Loader2, X, Save, CalendarPlus
 } from 'lucide-react';
 
-// Chú ý đường dẫn import, hãy sửa lại cho đúng với cấu trúc thư mục của bạn
+import DoctorSidebar from "@/app/doctor/Sidebar";
+
 import { getDoctorProfileData, updateDoctorProfileData } from '@/app/doctor/profile/actions';
 
 export default function DoctorProfile() {
   const router = useRouter();
+  
+  // 1. Sắp xếp mặc định: Tab cá nhân hiện đầu tiên
   const [activeTab, setActiveTab] = useState('personal'); 
   
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // States cho Form Chỉnh sửa
-  const [isEditing, setIsEditing] = useState(false);
+  // 2. Tách làm 2 State quản lý 2 Modal riêng biệt
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isEditScheduleOpen, setIsEditScheduleOpen] = useState(false);
+  
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Form lưu trữ toàn bộ dữ liệu tạm thời để edit
   const [editForm, setEditForm] = useState({
-    phone: '', dob: '', gender: '', address: '',
-    specialty: '', degree: '', university: '', experience: 0, languages: ''
+    fullName: '', phone: '', dob: '', gender: '', address: '',
+    specialty: '', degree: '', university: '', experience: 0, languages: '',
+    schedule: [] as any[]
   });
 
- // Kéo dữ liệu từ TiDB
   const fetchProfile = async () => {
     const res = await getDoctorProfileData();
     if (res.success && res.data) {
-      setProfile(res.data);
+      // 1. Ép kiểu schedule thành mảng thực tế nếu nó bị dính dạng chuỗi
+      let parsedSchedule = [];
+      if (res.data.schedule) {
+        if (typeof res.data.schedule === 'string') {
+          try {
+            parsedSchedule = JSON.parse(res.data.schedule);
+          } catch (e) {
+            parsedSchedule = [];
+          }
+        } else if (Array.isArray(res.data.schedule)) {
+          parsedSchedule = res.data.schedule;
+        }
+      }
+
+      // 2. Gán dữ liệu đã xử lý vào state
+      const processedData = { ...res.data, schedule: parsedSchedule };
+      setProfile(processedData);
       
-      // FIX LỖI: Kiểm tra an toàn trước khi gán vào Form
       setEditForm({
+        fullName: res.data.fullName, 
         phone: res.data.phone && res.data.phone !== 'Chưa cập nhật' ? res.data.phone : '',
         dob: res.data.dob && res.data.dob !== 'Chưa cập nhật' ? res.data.dob : '',
         gender: res.data.gender || 'Nam',
@@ -45,6 +68,7 @@ export default function DoctorProfile() {
         university: res.data.university && res.data.university !== 'Chưa cập nhật' ? res.data.university : '',
         experience: res.data.experience || 0,
         languages: res.data.languages && res.data.languages !== 'Chưa cập nhật' ? res.data.languages : '',
+        schedule: parsedSchedule // Dùng mảng đã parse
       });
     } else {
       router.push('/login');
@@ -56,22 +80,28 @@ export default function DoctorProfile() {
     fetchProfile();
   }, [router]);
 
-  const handleLogout = () => router.push('/login');
-
-  // Hàm xử lý Lưu Hồ Sơ
   const handleSaveProfile = async () => {
+    if (!editForm.fullName) return alert('Họ và tên không được để trống!');
+    
     setIsSaving(true);
     const res = await updateDoctorProfileData(editForm);
     setIsSaving(false);
     
     if (res.success) {
       alert(res.message);
-      setIsEditing(false); // Tắt Modal
+      setIsEditProfileOpen(false);
+      setIsEditScheduleOpen(false);
       setIsLoading(true);
-      fetchProfile(); // Tải lại dữ liệu mới nhất từ TiDB để cập nhật UI
+      fetchProfile(); 
     } else {
       alert(res.message);
     }
+  };
+
+  const handleScheduleChange = (index: number, field: string, value: string) => {
+    const newSchedule = [...editForm.schedule];
+    newSchedule[index] = { ...newSchedule[index], [field]: value };
+    setEditForm({ ...editForm, schedule: newSchedule });
   };
 
   if (isLoading || !profile) {
@@ -82,55 +112,12 @@ export default function DoctorProfile() {
     <div className="min-h-screen flex bg-gray-50 font-sans text-gray-800">
       
       {/* ==========================================
-          1. SIDEBAR
+          SIDEBAR
       ========================================== */}
-      <aside className="w-64 bg-[#172554] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 z-10">
-        <div className="h-20 flex items-center justify-center border-b border-blue-900/50">
-          <div className="flex items-center gap-2 text-white">
-            <Activity className="text-orange-500" size={28}/>
-            <span className="font-bold text-xl tracking-tight">HEALTHCARE AI</span>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
-          <Link href="/doctor/dashboard" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <LayoutDashboard size={20}/> Dashboard
-          </Link>
-          <Link href="/doctor/appointments" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <CalendarDays size={20}/> Lịch khám
-          </Link>
-          <Link href="/doctor/patients" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <Users size={20}/> Bệnh nhân
-          </Link>
-          <Link href="/doctor/records" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <FileText size={20}/> Hồ sơ bệnh án
-          </Link>
-          <Link href="/doctor/prescriptions" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <Pill size={20}/> Đơn thuốc
-          </Link>
-          <Link href="/doctor/lab-tests" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <TestTube size={20}/> Xét nghiệm
-          </Link>        
-          <Link href="/doctor/reports" className="flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white rounded-xl transition">
-            <BarChart3 size={20}/> Báo cáo
-          </Link>
-        </div>
-
-        <div className="p-4 border-t border-blue-900/50 space-y-1">
-          <Link href="/doctor/profile" className="flex items-center gap-3 px-4 py-2 bg-[#2563EB] text-white rounded-lg font-medium shadow-md text-sm">
-            <User size={18}/> Hồ sơ bác sĩ
-          </Link>
-          <Link href="/doctor/settings" className="flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition text-sm">
-            <Settings size={18}/> Cài đặt
-          </Link>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition text-sm mt-2">
-            <LogOut size={18}/> Đăng xuất
-          </button>
-        </div>
-      </aside>
+      <DoctorSidebar activePage="profile" />
 
       {/* ==========================================
-          2. MAIN CONTENT
+          MAIN CONTENT
       ========================================== */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
         
@@ -178,9 +165,9 @@ export default function DoctorProfile() {
                   </div>
                 </div>
                 
-                {/* NÚT MỞ MODAL CHỈNH SỬA */}
+                {/* NÚT MỞ MODAL SỬA HỒ SƠ */}
                 <button 
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setIsEditProfileOpen(true)}
                   className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-50 transition flex items-center gap-2 shadow-sm mb-2"
                 >
                   <Edit size={16}/> Chỉnh sửa hồ sơ
@@ -214,8 +201,7 @@ export default function DoctorProfile() {
 
           {/* MAIN CONTENT WITH TABS */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[500px]">
-            {/* TABS NAVIGATION */}
-            <div className="flex border-b border-gray-200 px-6">
+            <div className="flex border-b border-gray-200 px-6 overflow-x-auto">
               {[
                 { id: 'personal', label: '👤 Thông tin cá nhân' },
                 { id: 'professional', label: '🩺 Chuyên môn' },
@@ -225,7 +211,7 @@ export default function DoctorProfile() {
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)} 
-                  className={`py-4 px-6 font-bold text-sm border-b-2 transition ${
+                  className={`py-4 px-6 font-bold text-sm border-b-2 transition whitespace-nowrap ${
                     activeTab === tab.id 
                       ? 'border-[#2563EB] text-[#2563EB]' 
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -236,7 +222,6 @@ export default function DoctorProfile() {
               ))}
             </div>
 
-            {/* TAB CONTENTS */}
             <div className="p-8">
               
               {/* TAB 1: THÔNG TIN CÁ NHÂN */}
@@ -318,12 +303,17 @@ export default function DoctorProfile() {
                 </div>
               )}
 
-              {/* CÁC TAB KHÁC GIỮ NGUYÊN */}
+              {/* TAB 3: LỊCH LÀM VIỆC */}
               {activeTab === 'schedule' && (
                 <div className="max-w-4xl animate-in fade-in">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-gray-900">Lịch làm việc cố định</h3>
-                    <button className="text-sm text-[#2563EB] font-bold hover:underline">Yêu cầu đổi lịch</button>
+                    <h3 className="text-lg font-bold text-gray-900">Lịch làm việc trong tuần</h3>
+                    
+                    {/* NÚT MỞ MODAL SỬA LỊCH */}
+                    <button onClick={() => setIsEditScheduleOpen(true)} className="flex items-center gap-1.5 text-sm bg-blue-50 text-[#2563EB] px-4 py-2 rounded-lg font-bold hover:bg-blue-100 transition">
+                      <CalendarPlus size={16}/> Cập nhật lịch
+                    </button>
+                    
                   </div>
                   <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                     <table className="w-full text-left text-sm">
@@ -336,13 +326,17 @@ export default function DoctorProfile() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {profile.schedule.map((slot: any, index: number) => (
-                          <tr key={index} className="hover:bg-gray-50 transition">
+                      {profile.schedule.map((slot: any, index: number) => (
+                      <tr key={index} className="hover:bg-gray-50 transition">
                             <td className="p-4 font-bold text-gray-900">{slot.day}</td>
                             <td className="p-4 flex items-center gap-2"><Clock size={16} className="text-gray-400"/> {slot.time}</td>
-                            <td className="p-4">{slot.room}</td>
+                            <td className="p-4 font-medium">{slot.room}</td>
                             <td className="p-4 text-center">
-                              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">Có lịch</span>
+                              {slot.status === 'Có lịch' ? (
+                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Có lịch</span>
+                              ) : (
+                                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold border border-red-200">Nghỉ phép</span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -352,6 +346,7 @@ export default function DoctorProfile() {
                 </div>
               )}
 
+              {/* TAB 4: HIỆU SUẤT & ĐÁNH GIÁ */}
               {activeTab === 'performance' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 animate-in fade-in">
                   <div className="space-y-6">
@@ -414,35 +409,39 @@ export default function DoctorProfile() {
       </main>
 
       {/* ==========================================
-          3. MODAL (POPUP) CHỈNH SỬA HỒ SƠ 
+          MODAL 1: CHỈNH SỬA HỒ SƠ (CÁ NHÂN & CHUYÊN MÔN)
       ========================================== */}
-      {isEditing && (
+      {isEditProfileOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             
-            {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 <Edit size={20} className="text-[#2563EB]"/> Chỉnh sửa Hồ sơ Bác sĩ
               </h2>
-              <button onClick={() => setIsEditing(false)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition">
+              <button onClick={() => setIsEditProfileOpen(false)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition">
                 <X size={20}/>
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8">
               
               {/* Form 1: Thông tin cá nhân */}
               <div>
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">1. Thông tin cá nhân</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Họ và tên <span className="text-red-500">*</span></label>
+                    <input 
+                      type="text" value={editForm.fullName} onChange={e => setEditForm({...editForm, fullName: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại</label>
                     <input 
                       type="text" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: 0988 123 456" 
                     />
                   </div>
                   <div>
@@ -450,7 +449,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.dob} onChange={e => setEditForm({...editForm, dob: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: 20/05/1988" 
                     />
                   </div>
                   <div>
@@ -468,7 +466,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: Quận Cầu Giấy, Hà Nội" 
                     />
                   </div>
                 </div>
@@ -483,7 +480,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.specialty} onChange={e => setEditForm({...editForm, specialty: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: Nội tổng quát" 
                     />
                   </div>
                   <div>
@@ -491,7 +487,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.degree} onChange={e => setEditForm({...editForm, degree: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: Thạc sĩ Y Khoa" 
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -499,7 +494,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.university} onChange={e => setEditForm({...editForm, university: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: Đại học Y Hà Nội" 
                     />
                   </div>
                   <div>
@@ -514,7 +508,6 @@ export default function DoctorProfile() {
                     <input 
                       type="text" value={editForm.languages} onChange={e => setEditForm({...editForm, languages: e.target.value})}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition" 
-                      placeholder="VD: Tiếng Anh, Tiếng Pháp" 
                     />
                   </div>
                 </div>
@@ -522,11 +515,10 @@ export default function DoctorProfile() {
 
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
               <button 
                 disabled={isSaving}
-                onClick={() => setIsEditing(false)} 
+                onClick={() => setIsEditProfileOpen(false)} 
                 className="px-6 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition"
               >
                 Hủy bỏ
@@ -536,10 +528,94 @@ export default function DoctorProfile() {
                 onClick={handleSaveProfile} 
                 className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#2563EB] hover:bg-blue-700 shadow-md transition flex items-center gap-2 disabled:opacity-50"
               >
-                {isSaving ? <Loader2 size={18} className="animate-spin"/> : <Save size={18}/>} Lưu thông tin
+                {isSaving ? <Loader2 size={18} className="animate-spin"/> : <Save size={18}/>} Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL 2: CHỈNH SỬA LỊCH LÀM VIỆC
+      ========================================== */}
+      {isEditScheduleOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <CalendarPlus size={20} className="text-[#2563EB]"/> Cập nhật Lịch làm việc tuần
+              </h2>
+              <button onClick={() => setIsEditScheduleOpen(false)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition">
+                <X size={20}/>
               </button>
             </div>
 
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <div className="space-y-3">
+                <div className="grid grid-cols-12 gap-3 px-3 pb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <div className="col-span-3">Thứ / Ngày</div>
+                  <div className="col-span-3">Khung Giờ</div>
+                  <div className="col-span-3">Phòng Khám</div>
+                  <div className="col-span-3">Trạng Thái</div>
+                </div>
+                
+                {editForm.schedule.map((slot, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-3 items-center bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div className="col-span-3">
+                      <input 
+                        type="text" value={slot.day} 
+                        onChange={e => handleScheduleChange(index, 'day', e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <input 
+                        type="text" value={slot.time} 
+                        onChange={e => handleScheduleChange(index, 'time', e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2563EB]"
+                        placeholder="08:00 - 17:00"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <input 
+                        type="text" value={slot.room} 
+                        onChange={e => handleScheduleChange(index, 'room', e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2563EB]"
+                        placeholder="Tên phòng"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <select 
+                        value={slot.status} 
+                        onChange={e => handleScheduleChange(index, 'status', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[#2563EB] ${slot.status === 'Có lịch' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
+                      >
+                        <option value="Có lịch" className="text-gray-900 bg-white">Có lịch</option>
+                        <option value="Nghỉ phép" className="text-gray-900 bg-white">Nghỉ phép</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button 
+                disabled={isSaving}
+                onClick={() => setIsEditScheduleOpen(false)} 
+                className="px-6 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                disabled={isSaving}
+                onClick={handleSaveProfile} 
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#2563EB] hover:bg-blue-700 shadow-md transition flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 size={18} className="animate-spin"/> : <Save size={18}/>} Lưu Lịch trực
+              </button>
+            </div>
           </div>
         </div>
       )}

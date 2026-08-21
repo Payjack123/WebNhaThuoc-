@@ -1,29 +1,52 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, CalendarDays, FileText, Pill, TestTube, 
   Bell, Settings, LogOut, Search, Activity, User, Wallet, 
   ShieldCheck, Lock, Smartphone, Monitor, AlertTriangle, 
-  Camera, CheckCircle2, Mail, Phone, Trash2, KeyRound
+  Camera, CheckCircle2, Mail, Phone, Trash2, KeyRound, Loader2
 } from 'lucide-react';
+
+import { getPatientSettingsData, updatePatientProfile, updatePatientPassword } from '@/app/patient/settings/actions';
+import PatientSidebar from '@/app/patient/Sidebar';
 
 export default function PatientSettingsPage() {
   const router = useRouter();
   
-  // Trạng thái Quản lý Tab
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
 
-  // Trạng thái Tắt/Bật thông báo (Mock)
-  const [notiSettings, setNotiSettings] = useState({
-    appointment: true,
-    labResult: true,
-    prescription: true,
-    billing: false,
-    email: true,
-    sms: true
+  // State cho Hồ sơ
+  const [profileForm, setProfileForm] = useState<any>({
+    fullName: '', email: '', phone: '', dob: '', gender: 'Nam', address: '', patientCode: '', avatar: '', cccd: ''
   });
+
+  // State cho Mật khẩu
+  const [passForm, setPassForm] = useState({
+    currentPassword: '', newPassword: '', confirmPassword: ''
+  });
+
+  // State Tắt/Bật thông báo (Mock UI)
+  const [notiSettings, setNotiSettings] = useState({
+    appointment: true, labResult: true, prescription: true, billing: false, email: true, sms: true
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const res = await getPatientSettingsData();
+      if (res.success && res.data) {
+        setProfileForm(res.data);
+      } else {
+        router.push('/login');
+      }
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [router]);
 
   const handleLogout = () => {
     router.push('/login');
@@ -33,58 +56,53 @@ export default function PatientSettingsPage() {
     setNotiSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Xử lý Cập nhật Hồ Sơ
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const res = await updatePatientProfile(profileForm);
+    setIsSaving(false);
+    if (res.success) {
+      alert(res.message);
+    } else {
+      alert(res.message);
+    }
+  };
+
+  // Xử lý Cập nhật Mật khẩu
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passForm.newPassword !== passForm.confirmPassword) {
+      return alert('Mật khẩu xác nhận không khớp!');
+    }
+    if (passForm.newPassword.length < 6) {
+      return alert('Mật khẩu mới phải có ít nhất 6 ký tự!');
+    }
+
+    setIsSaving(true);
+    const res = await updatePatientPassword(passForm);
+    setIsSaving(false);
+
+    if (res.success) {
+      alert(res.message);
+      setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } else {
+      alert(res.message);
+    }
+  };
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
+
   return (
     <div className="min-h-screen flex bg-[#F8FAFC] font-sans text-gray-800 overflow-hidden">
       
       {/* ==========================================
-          1. SIDEBAR
+          SIDEBAR
       ========================================== */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 shadow-sm z-20">
-        <div className="h-20 flex items-center justify-center border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Activity className="text-[#2563EB]" size={28}/>
-            <span className="font-black text-xl tracking-tight text-gray-900">HEALTH<span className="text-[#2563EB]">CARE</span></span>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-4 custom-scrollbar">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Menu chính</p>
-          
-          <Link href="/patient/dashboard" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <LayoutDashboard size={18}/> Tổng quan
-          </Link>
-          <Link href="/patient/appointments" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <CalendarDays size={18}/> Đặt & Lịch khám
-          </Link>
-          <Link href="/patient/records" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <FileText size={18}/> Hồ sơ sức khỏe
-          </Link>
-          <Link href="/patient/prescriptions" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <Pill size={18}/> Đơn thuốc của tôi
-          </Link>
-          <Link href="/patient/lab-tests" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <TestTube size={18}/> Kết quả xét nghiệm
-          </Link>
-          <Link href="/patient/billing" className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold">
-            <Wallet size={18}/> Thanh toán viện phí
-          </Link>
-
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-2">Tài khoản</p>
-          {/* Active Menu */}
-          <Link href="/patient/settings" className="flex items-center gap-3 px-4 py-3 bg-[#2563EB] text-white rounded-2xl font-bold shadow-md shadow-blue-200 transition-all text-sm">
-            <Settings size={18}/> Cài đặt cá nhân
-          </Link>
-        </div>
-
-        <div className="p-4 border-t border-gray-100">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-2xl transition-all text-sm font-bold">
-            <LogOut size={18}/> Đăng xuất
-          </button>
-        </div>
-      </aside>
+      <PatientSidebar activePage="settings" />
 
       {/* ==========================================
-          2. MAIN CONTENT AREA
+          MAIN CONTENT AREA
       ========================================== */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         
@@ -102,10 +120,10 @@ export default function PatientSettingsPage() {
             </button>
             <div className="flex items-center gap-3 pl-5 border-l border-gray-200 cursor-pointer group">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-gray-900 group-hover:text-[#2563EB] transition">Nguyễn Văn A</p>
-                <p className="text-xs text-gray-500 font-medium">Bệnh nhân (BN001)</p>
+                <p className="text-sm font-bold text-gray-900 group-hover:text-[#2563EB] transition">{profileForm.fullName}</p>
+                <p className="text-xs text-gray-500 font-medium">Bệnh nhân ({profileForm.patientCode})</p>
               </div>
-              <img src="https://ui-avatars.com/api/?name=Nguyễn+Văn+A&background=2563EB&color=fff" alt="Avatar" className="w-11 h-11 rounded-full border-2 border-white shadow-sm group-hover:shadow-md transition"/>
+              <img src={profileForm.avatar} alt="Avatar" className="w-11 h-11 rounded-full border-2 border-white shadow-sm group-hover:shadow-md transition"/>
             </div>
           </div>
         </header>
@@ -125,7 +143,7 @@ export default function PatientSettingsPage() {
             </div>
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0"><Smartphone size={24}/></div>
-              <div><p className="text-xs text-gray-500 font-bold uppercase">Thiết bị</p><p className="text-lg font-black text-gray-900 mt-0.5">2</p></div>
+              <div><p className="text-xs text-gray-500 font-bold uppercase">Thiết bị</p><p className="text-lg font-black text-gray-900 mt-0.5">1</p></div>
             </div>
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0"><Bell size={24}/></div>
@@ -168,7 +186,7 @@ export default function PatientSettingsPage() {
               
               {/* TAB 1: HỒ SƠ CÁ NHÂN */}
               {activeTab === 'profile' && (
-                <div className="p-8 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 overflow-y-auto custom-scrollbar">
+                <form onSubmit={handleProfileSubmit} className="p-8 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 overflow-y-auto custom-scrollbar">
                   <div className="border-b border-gray-100 pb-5 mb-6">
                     <h2 className="text-2xl font-black text-gray-900">Hồ sơ cá nhân</h2>
                     <p className="text-gray-500 text-sm mt-1">Cập nhật thông tin cá nhân và ảnh đại diện của bạn.</p>
@@ -177,52 +195,58 @@ export default function PatientSettingsPage() {
                   <div className="flex flex-col md:flex-row gap-8 mb-8">
                     <div className="flex flex-col items-center gap-3">
                       <div className="relative group cursor-pointer">
-                        <img src="https://ui-avatars.com/api/?name=Nguyễn+Văn+A&background=2563EB&color=fff&size=128" alt="Avatar" className="w-32 h-32 rounded-full border-4 border-white shadow-md"/>
+                        <img src={profileForm.avatar} alt="Avatar" className="w-32 h-32 rounded-full border-4 border-white shadow-md"/>
                         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Camera className="text-white" size={24}/>
                         </div>
                       </div>
-                      <button className="text-sm font-bold text-[#2563EB] hover:underline">Thay đổi ảnh</button>
+                      <button type="button" className="text-sm font-bold text-[#2563EB] hover:underline">Thay đổi ảnh</button>
                     </div>
                     
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Họ và tên</label>
-                        <input type="text" defaultValue="Nguyễn Văn A" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
+                        <input value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Mã bệnh nhân</label>
-                        <input type="text" defaultValue="BN0001" disabled className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm outline-none font-bold text-gray-500 cursor-not-allowed"/>
+                        <input type="text" value={profileForm.patientCode} disabled className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm outline-none font-bold text-gray-500 cursor-not-allowed"/>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Email</label>
-                        <input type="email" defaultValue="nguyenvana@gmail.com" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
+                        <input value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} type="email" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Số điện thoại</label>
-                        <input type="text" defaultValue="0981.234.567" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
+                        <input value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Ngày sinh</label>
-                        <input type="date" defaultValue="2003-05-20" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
+                        <input value={profileForm.dob} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} type="date" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Giới tính</label>
-                        <select className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900">
-                          <option>Nam</option><option>Nữ</option>
+                        <select value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900">
+                          <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
                         </select>
                       </div>
-                      <div className="md:col-span-2">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Căn cước công dân</label>
+                        <input value={profileForm.cccd} onChange={e => setProfileForm({...profileForm, cccd: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900" placeholder="Số CCCD/CMND"/>
+                      </div>
+                      <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Địa chỉ hiện tại</label>
-                        <input type="text" defaultValue="Quận Cầu Giấy, Hà Nội" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
+                        <input value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none font-medium text-gray-900"/>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-auto border-t border-gray-100 pt-5 flex justify-end">
-                    <button className="bg-[#2563EB] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md transition-all">Lưu thay đổi</button>
+                    <button disabled={isSaving} type="submit" className="bg-[#2563EB] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
+                      {isSaving ? <Loader2 size={18} className="animate-spin"/> : 'Lưu thay đổi'}
+                    </button>
                   </div>
-                </div>
+                </form>
               )}
 
               {/* TAB 2: BẢO MẬT & MẬT KHẨU */}
@@ -235,26 +259,28 @@ export default function PatientSettingsPage() {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
                     {/* Đổi mật khẩu */}
-                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 h-max">
+                    <form onSubmit={handlePasswordSubmit} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 h-max">
                       <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2"><KeyRound size={18} className="text-[#2563EB]"/> Đổi mật khẩu</h3>
                       <div className="space-y-4">
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">MẬT KHẨU HIỆN TẠI</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
+                          <input required value={passForm.currentPassword} onChange={e => setPassForm({...passForm, currentPassword: e.target.value})} type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">MẬT KHẨU MỚI</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
+                          <input required value={passForm.newPassword} onChange={e => setPassForm({...passForm, newPassword: e.target.value})} type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-1.5">XÁC NHẬN MẬT KHẨU MỚI</label>
-                          <input type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
+                          <input required value={passForm.confirmPassword} onChange={e => setPassForm({...passForm, confirmPassword: e.target.value})} type="password" placeholder="••••••••" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none"/>
                         </div>
-                        <button className="w-full bg-[#2563EB] text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-sm transition-all mt-2">Cập nhật mật khẩu</button>
+                        <button disabled={isSaving} type="submit" className="w-full bg-[#2563EB] text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-sm transition-all mt-2 flex justify-center">
+                          {isSaving ? <Loader2 size={20} className="animate-spin"/> : 'Cập nhật mật khẩu'}
+                        </button>
                       </div>
-                    </div>
+                    </form>
 
-                    {/* Xác thực 2 bước */}
+                    {/* Xác thực 2 bước & SĐT */}
                     <div className="space-y-4">
                       <div className="border border-gray-200 p-5 rounded-2xl flex items-center justify-between">
                         <div className="flex gap-3 items-center">
@@ -264,7 +290,6 @@ export default function PatientSettingsPage() {
                             <p className="text-xs text-gray-500 mt-0.5">Tăng cường bảo mật qua ứng dụng.</p>
                           </div>
                         </div>
-                        {/* Fake Toggle */}
                         <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
                           <div className="absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow"></div>
                         </div>
@@ -275,7 +300,7 @@ export default function PatientSettingsPage() {
                           <div className="bg-white p-2.5 rounded-lg text-green-600 shadow-sm"><Mail size={20}/></div>
                           <div>
                             <p className="font-bold text-gray-900">Email khôi phục</p>
-                            <p className="text-xs text-gray-500 mt-0.5">nguyenvana@gmail.com</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{profileForm.email}</p>
                           </div>
                         </div>
                         <span className="text-xs font-bold text-green-700 bg-green-200 px-2.5 py-1 rounded flex items-center gap-1"><CheckCircle2 size={12}/> Đã xác minh</span>
@@ -286,7 +311,7 @@ export default function PatientSettingsPage() {
                           <div className="bg-white p-2.5 rounded-lg text-green-600 shadow-sm"><Phone size={20}/></div>
                           <div>
                             <p className="font-bold text-gray-900">Số điện thoại</p>
-                            <p className="text-xs text-gray-500 mt-0.5">0981.234.567</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{profileForm.phone}</p>
                           </div>
                         </div>
                         <span className="text-xs font-bold text-green-700 bg-green-200 px-2.5 py-1 rounded flex items-center gap-1"><CheckCircle2 size={12}/> Đã xác minh</span>
@@ -296,7 +321,7 @@ export default function PatientSettingsPage() {
                 </div>
               )}
 
-              {/* TAB 3: CÀI ĐẶT THÔNG BÁO */}
+              {/* TAB 3: CÀI ĐẶT THÔNG BÁO (Mock UI) */}
               {activeTab === 'notifications' && (
                 <div className="p-8 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 overflow-y-auto custom-scrollbar">
                   <div className="border-b border-gray-100 pb-5 mb-6">
@@ -344,7 +369,7 @@ export default function PatientSettingsPage() {
                 </div>
               )}
 
-              {/* TAB 4: THIẾT BỊ ĐĂNG NHẬP */}
+              {/* TAB 4: THIẾT BỊ ĐĂNG NHẬP (Mock UI) */}
               {activeTab === 'devices' && (
                 <div className="p-8 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 overflow-y-auto custom-scrollbar">
                   <div className="border-b border-gray-100 pb-5 mb-6 flex justify-between items-center">
@@ -363,24 +388,11 @@ export default function PatientSettingsPage() {
                       <div className="flex gap-4 items-center">
                         <div className="w-12 h-12 bg-white text-[#2563EB] rounded-xl flex items-center justify-center shadow-sm border border-blue-100"><Monitor size={24}/></div>
                         <div>
-                          <p className="font-bold text-gray-900">Windows 11 • Trình duyệt Chrome</p>
+                          <p className="font-bold text-gray-900">Máy tính (Trình duyệt Web)</p>
                           <p className="text-sm text-gray-500 mt-0.5">IP: 192.168.1.100 • Hà Nội, Việt Nam</p>
                           <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold text-green-700 bg-green-100 border border-green-200">Thiết bị hiện tại</span>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="border border-gray-200 p-5 rounded-2xl flex items-center justify-between hover:bg-gray-50 transition group">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-12 h-12 bg-gray-100 text-gray-500 rounded-xl flex items-center justify-center"><Smartphone size={24}/></div>
-                        <div>
-                          <p className="font-bold text-gray-900">iPhone 14 Pro • App Y tế</p>
-                          <p className="text-sm text-gray-500 mt-0.5">Lần cuối: 2 ngày trước • Hà Nội, Việt Nam</p>
-                        </div>
-                      </div>
-                      <button className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Đăng xuất thiết bị này">
-                        <LogOut size={20}/>
-                      </button>
                     </div>
                   </div>
                 </div>

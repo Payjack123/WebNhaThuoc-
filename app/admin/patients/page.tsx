@@ -1,44 +1,114 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, CalendarDays, FileText, Pill, TestTube, 
   Settings, LogOut, Search, Activity, User, Building2, 
-  ShieldCheck, History, Wallet, ArrowUpRight, CheckCircle2, 
-  Star, Printer, Filter, Plus, Eye, Edit, Trash2, Mail, Phone, 
-  Stethoscope, Calendar, Clock, MapPin, CreditCard, Lock, Unlock, X
+  ShieldCheck, History, Wallet, CheckCircle2, 
+  Filter, Plus, Edit, Lock, Unlock, Phone, Mail, MapPin, Loader2, X
 } from 'lucide-react';
+
+import { getAdminPatientsData, addPatient, togglePatientStatus } from '@/app/admin/patients/actions';
 
 export default function PatientManagementPage() {
   const router = useRouter();
-  const [selectedPatientId, setSelectedPatientId] = useState('BN001');
+  
+  // States dữ liệu
+  const [patients, setPatients] = useState<any[]>([]);
+  const [kpis, setKpis] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // States UI & Bộ lọc
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('history');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterGender, setFilterGender] = useState('Tất cả');
+  const [filterStatus, setFilterStatus] = useState('Tất cả');
 
-  const handleLogout = () => {
-    // localStorage.removeItem('token');
-    router.push('/login');
+  // State Form Thêm Bệnh nhân
+  const [addForm, setAddForm] = useState({
+    name: '', dob: '', gender: 'Nam', phone: '', email: '', 
+    address: '', cccd: '', bhyt: '', status: 'Hoạt động'
+  });
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    const res = await getAdminPatientsData();
+    if (res.success && res.data) {
+      setPatients(res.data.patients);
+      setKpis(res.data.kpis);
+      if (res.data.patients.length > 0 && !selectedPatientId) {
+        setSelectedPatientId(res.data.patients[0].id);
+      }
+    }
+    setIsLoading(false);
   };
 
-  // Mock dữ liệu Bệnh nhân
-  const patients = [
-    { id: 'BN001', name: 'Nguyễn Văn A', gender: 'Nam', age: 25, phone: '0981234567', email: 'nguyenvana@gmail.com', address: 'Quận Cầu Giấy, Hà Nội', lastVisit: '15/08/2026', status: 'Hoạt động', statusColor: 'text-green-700 bg-green-100 border-green-200' },
-    { id: 'BN002', name: 'Trần Thị B', gender: 'Nữ', age: 32, phone: '0971234567', email: 'tranthib@gmail.com', address: 'Quận Đống Đa, Hà Nội', lastVisit: '14/08/2026', status: 'Hoạt động', statusColor: 'text-green-700 bg-green-100 border-green-200' },
-    { id: 'BN003', name: 'Lê Văn C', gender: 'Nam', age: 41, phone: '0961234567', email: 'levanc@gmail.com', address: 'Quận Hai Bà Trưng, Hà Nội', lastVisit: '12/08/2026', status: 'Khóa tài khoản', statusColor: 'text-red-700 bg-red-100 border-red-200' },
-    { id: 'BN004', name: 'Phạm Minh D', gender: 'Nam', age: 58, phone: '0951234567', email: 'phamminhd@gmail.com', address: 'Quận Nam Từ Liêm, Hà Nội', lastVisit: '10/08/2026', status: 'Đang điều trị', statusColor: 'text-blue-700 bg-blue-100 border-blue-200' },
-    { id: 'BN005', name: 'Hoàng Ngọc E', gender: 'Nữ', age: 29, phone: '0941234567', email: 'hoangngoce@gmail.com', address: 'Quận Tây Hồ, Hà Nội', lastVisit: '05/08/2026', status: 'Chờ xác minh', statusColor: 'text-yellow-700 bg-yellow-100 border-yellow-200' },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const activePat = patients.find(p => p.id === selectedPatientId) || patients[0];
+  const handleAddSubmit = async () => {
+    if (!addForm.name || !addForm.phone) {
+      return alert('Vui lòng điền đủ Họ tên và Số điện thoại!');
+    }
+    setIsSubmitting(true);
+    const res = await addPatient(addForm);
+    setIsSubmitting(false);
+
+    if (res.success) {
+      alert(res.message);
+      setIsAddModalOpen(false);
+      setAddForm({ name: '', dob: '', gender: 'Nam', phone: '', email: '', address: '', cccd: '', bhyt: '', status: 'Hoạt động' });
+      fetchData();
+    } else {
+      alert(res.message);
+    }
+  };
+
+  const handleToggleStatus = async (id: number, currentStatus: string) => {
+    if (confirm(`Bạn muốn ${currentStatus === 'Khóa tài khoản' ? 'MỞ KHÓA' : 'KHÓA'} tài khoản bệnh nhân này?`)) {
+      const res = await togglePatientStatus(id, currentStatus);
+      if (res.success) {
+        fetchData();
+      } else {
+        alert(res.message);
+      }
+    }
+  };
+
+  const handleLogout = () => router.push('/login');
+
+  // Lọc dữ liệu
+  const filteredPatients = patients.filter(pat => {
+    const matchSearch = pat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        pat.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        pat.phone.includes(searchTerm);
+    const matchGender = filterGender === 'Tất cả' || pat.gender === filterGender;
+    const matchStatus = filterStatus === 'Tất cả' || pat.status === filterStatus;
+    return matchSearch && matchGender && matchStatus;
+  });
+
+  const activePat = patients.find(p => p.id === selectedPatientId) || filteredPatients[0];
+
+  const getStatusColor = (status: string) => {
+    if (status === 'Hoạt động') return 'text-green-700 bg-green-100 border-green-200';
+    if (status === 'Khóa tài khoản') return 'text-red-700 bg-red-100 border-red-200';
+    if (status === 'Đang điều trị') return 'text-blue-700 bg-blue-100 border-blue-200';
+    return 'text-yellow-700 bg-yellow-100 border-yellow-200';
+  };
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
 
   return (
     <div className="min-h-screen flex bg-gray-50 font-sans text-gray-800 overflow-hidden">
       
-      {/* ==========================================
-          1. SIDEBAR (Active: Quản lý Bệnh nhân)
-      ========================================== */}
-      <aside className="w-64 bg-[#0F172A] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 shadow-xl z-20">
+      {/* SIDEBAR */}
+       <aside className="w-64 bg-[#0F172A] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 shadow-xl z-20">
         <div className="h-20 flex items-center justify-center border-b border-gray-800 bg-[#0B1120]">
           <div className="flex items-center gap-2 text-white">
             <Activity className="text-[#2563EB]" size={28}/>
@@ -47,7 +117,7 @@ export default function PatientManagementPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-6 px-3 custom-scrollbar">
-          
+          {/* Nhóm 1: Tổng quan */}
           <div className="space-y-1">
             <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">1. Tổng quan</p>
             <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
@@ -55,12 +125,12 @@ export default function PatientManagementPage() {
             </Link>
           </div>
 
+          {/* Nhóm 2: Quản lý phòng khám */}
           <div className="space-y-1">
             <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">2. Phòng khám</p>
             <Link href="/admin/doctors" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
               <User size={18}/> Quản lý Bác sĩ
             </Link>
-            {/* Active Menu */}
             <Link href="/admin/patients" className="flex items-center gap-3 px-4 py-2.5 bg-[#2563EB] text-white rounded-xl font-medium shadow-md transition-all text-sm">
               <Users size={18}/> Quản lý Bệnh nhân
             </Link>
@@ -72,12 +142,10 @@ export default function PatientManagementPage() {
             </Link>
             <Link href="/admin/prescriptions" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
               <Pill size={18}/> Quản lý Đơn thuốc
-            </Link>
-            <Link href="/admin/lab-tests" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
-              <TestTube size={18}/> Quản lý Xét nghiệm
-            </Link>
+            </Link>          
           </div>
 
+          {/* Nhóm 3: Quản trị hệ thống */}
           <div className="space-y-1">
             <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">3. Hệ thống</p>
             <Link href="/admin/users" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
@@ -91,13 +159,13 @@ export default function PatientManagementPage() {
             </Link>
           </div>
 
+          {/* Nhóm 4: Cấu hình */}
           <div className="space-y-1">
             <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">4. Cấu hình</p>
             <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
               <Settings size={18}/> Cài đặt chung
             </Link>
           </div>
-
         </div>
 
         <div className="p-4 border-t border-gray-800 bg-[#0B1120]">
@@ -110,9 +178,7 @@ export default function PatientManagementPage() {
         </div>
       </aside>
 
-      {/* ==========================================
-          2. MAIN CONTENT AREA
-      ========================================== */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 relative">
         
         {/* TOP HEADER */}
@@ -131,7 +197,7 @@ export default function PatientManagementPage() {
             >
               <Plus size={18}/> Thêm Bệnh nhân
             </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-200 cursor-pointer">
+            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-bold text-gray-900">Quản trị viên</p>
               </div>
@@ -143,15 +209,15 @@ export default function PatientManagementPage() {
         {/* SCROLLABLE CONTENT */}
         <div className="flex-1 overflow-y-auto p-8 animate-in fade-in duration-500">
           
-          {/* 6 KPI CARDS */}
+          {/* KPI CARDS */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
             {[
-              { label: 'Tổng bệnh nhân', value: '2.540', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-              { label: 'Đang hoạt động', value: '2.300', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
-              { label: 'Đăng ký hôm nay', value: '125', icon: CalendarDays, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-              { label: 'Đang điều trị', value: '480', icon: Activity, color: 'text-yellow-600', bg: 'bg-yellow-50' },
-              { label: 'Chưa thanh toán', value: '185', icon: Wallet, color: 'text-red-600', bg: 'bg-red-50' },
-              { label: 'Đã có hồ sơ', value: '1.950', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
+              { label: 'Tổng bệnh nhân', value: kpis.total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+              { label: 'Đang hoạt động', value: kpis.active, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+              { label: 'Đăng ký hôm nay', value: kpis.today, icon: CalendarDays, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+              { label: 'Đang điều trị', value: kpis.inTreatment, icon: Activity, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+              { label: 'Chưa thanh toán', value: kpis.unpaid, icon: Wallet, color: 'text-red-600', bg: 'bg-red-50' },
+              { label: 'Đã có hồ sơ', value: kpis.hasRecords, icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
             ].map((kpi, idx) => (
               <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-all duration-300">
                 <div className={`w-12 h-12 ${kpi.bg} ${kpi.color} rounded-2xl flex items-center justify-center shrink-0`}><kpi.icon size={24}/></div>
@@ -167,37 +233,45 @@ export default function PatientManagementPage() {
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center justify-between">
             <div className="flex-1 flex gap-4 min-w-0">
               <div className="relative w-72">
-                <input type="text" placeholder="Tìm kiếm tên, SĐT, CCCD..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition-all"/>
+                <input 
+                  type="text" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Tìm kiếm tên, SĐT, Mã BN..." 
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] outline-none transition-all"
+                />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
               </div>
-              <select className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#2563EB] outline-none">
-                <option>Giới tính (Tất cả)</option>
-                <option>Nam</option>
-                <option>Nữ</option>
+              <select 
+                value={filterGender}
+                onChange={(e) => setFilterGender(e.target.value)}
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#2563EB] outline-none"
+              >
+                <option value="Tất cả">Giới tính (Tất cả)</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
               </select>
-              <select className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#2563EB] outline-none">
-                <option>Trạng thái (Tất cả)</option>
-                <option>Hoạt động</option>
-                <option>Khóa tài khoản</option>
-                <option>Đang điều trị</option>
+              <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#2563EB] outline-none"
+              >
+                <option value="Tất cả">Trạng thái (Tất cả)</option>
+                <option value="Hoạt động">Hoạt động</option>
+                <option value="Khóa tài khoản">Khóa tài khoản</option>
+                <option value="Đang điều trị">Đang điều trị</option>
               </select>
-              <button className="bg-gray-100 border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm">
-                <Filter size={18}/> Lọc
-              </button>
             </div>
-            <button className="text-gray-500 hover:text-[#2563EB] font-bold text-sm underline underline-offset-2 transition-colors">
-              Làm mới bộ lọc
-            </button>
           </div>
 
           {/* MASTER-DETAIL LAYOUT */}
           <div className="flex flex-col xl:flex-row gap-8 h-[calc(100vh-320px)] min-h-[550px]">
             
-            {/* CỘT TRÁI (MASTER): Danh sách Bệnh nhân (55%) */}
+            {/* CỘT TRÁI (MASTER) */}
             <div className="xl:w-[55%] flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2"><Users size={18} className="text-[#2563EB]"/> Danh sách Bệnh nhân</h3>
-                <span className="text-sm font-bold text-[#2563EB] bg-blue-100 px-3 py-1 rounded-full">{patients.length} Kết quả</span>
+                <span className="text-sm font-bold text-[#2563EB] bg-blue-100 px-3 py-1 rounded-full">{filteredPatients.length} Kết quả</span>
               </div>
               
               <div className="flex-1 overflow-auto">
@@ -212,7 +286,7 @@ export default function PatientManagementPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {patients.map((pat) => (
+                    {filteredPatients.length > 0 ? filteredPatients.map((pat) => (
                       <tr 
                         key={pat.id} 
                         onClick={() => setSelectedPatientId(pat.id)}
@@ -220,17 +294,17 @@ export default function PatientManagementPage() {
                       >
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <img src={`https://ui-avatars.com/api/?name=${pat.name.replace(/ /g, '+')}&background=random`} alt="Avatar" className="w-10 h-10 rounded-full border border-gray-200"/>
+                            <img src={pat.avatar} alt="Avatar" className="w-10 h-10 rounded-full border border-gray-200"/>
                             <div>
                               <p className={`font-bold ${selectedPatientId === pat.id ? 'text-[#2563EB]' : 'text-gray-900'}`}>{pat.name}</p>
-                              <p className="text-xs text-gray-500">{pat.id} • {pat.gender} • {pat.age}T</p>
+                              <p className="text-xs text-gray-500">{pat.patientCode} • {pat.gender} • {pat.age}T</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-5 py-4 font-medium text-gray-700">{pat.phone}</td>
                         <td className="px-5 py-4 font-medium text-gray-700">{pat.lastVisit}</td>
                         <td className="px-5 py-4">
-                          <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center w-max gap-1.5 ${pat.statusColor}`}>
+                          <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center w-max gap-1.5 ${getStatusColor(pat.status)}`}>
                             {pat.status === 'Hoạt động' && <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>}
                             {pat.status === 'Khóa tài khoản' && <Lock size={12}/>}
                             {pat.status}
@@ -239,207 +313,103 @@ export default function PatientManagementPage() {
                         <td className="px-5 py-4 text-center">
                           <div className="flex justify-center gap-2">
                             <button className="p-1.5 text-gray-400 hover:text-[#2563EB] hover:bg-blue-50 rounded transition" title="Chỉnh sửa"><Edit size={16}/></button>
-                            <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition" title={pat.status === 'Khóa tài khoản' ? 'Mở khóa' : 'Khóa tài khoản'}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleToggleStatus(pat.id, pat.status); }}
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition" 
+                              title={pat.status === 'Khóa tài khoản' ? 'Mở khóa' : 'Khóa tài khoản'}
+                            >
                               {pat.status === 'Khóa tài khoản' ? <Unlock size={16}/> : <Lock size={16}/>}
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-500">Không tìm thấy bệnh nhân nào.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
-              <div className="p-4 border-t border-gray-100 bg-white flex justify-between items-center text-sm text-gray-500">
-                <span>Hiển thị 1-5 của 2,540 bệnh nhân</span>
-                <div className="flex gap-1">
-                  <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Trước</button>
-                  <button className="px-3 py-1 bg-[#2563EB] text-white rounded font-bold shadow-sm">1</button>
-                  <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                  <button className="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">Sau</button>
-                </div>
-              </div>
             </div>
 
-            {/* CỘT PHẢI (DETAIL): Thông tin chi tiết (45%) */}
+            {/* CỘT PHẢI (DETAIL) */}
             <div className="xl:w-[45%] flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-              
-              {/* Thẻ Hồ sơ tóm tắt */}
-              <div className="p-6 bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white relative">
-                <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-sm border border-white/20">
-                  {activePat.status === 'Hoạt động' ? <CheckCircle2 size={14} className="text-green-400"/> : <Lock size={14} className="text-red-400"/>}
-                  {activePat.status}
-                </div>
-                <div className="flex gap-5 items-center">
-                  <img src={`https://ui-avatars.com/api/?name=${activePat.name.replace(/ /g, '+')}&background=random&size=128`} alt="Avatar" className="w-20 h-20 rounded-2xl border-4 border-white/20 shadow-xl"/>
-                  <div>
-                    <h2 className="text-2xl font-bold">{activePat.name}</h2>
-                    <p className="text-gray-300 text-sm mt-1">Mã BN: {activePat.id} • {activePat.gender} • {activePat.age} tuổi</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-sm font-medium">
-                      <p className="flex items-center gap-1.5"><Phone size={14} className="text-gray-400"/> {activePat.phone}</p>
-                      <p className="flex items-center gap-1.5"><Mail size={14} className="text-gray-400"/> {activePat.email}</p>
-                      <p className="flex items-center gap-1.5 w-full"><MapPin size={14} className="text-gray-400"/> {activePat.address}</p>
+              {activePat ? (
+                <>
+                  <div className="p-6 bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white relative">
+                    <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-sm border border-white/20">
+                      {activePat.status === 'Hoạt động' ? <CheckCircle2 size={14} className="text-green-400"/> : <Lock size={14} className="text-red-400"/>}
+                      {activePat.status}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TABS NAVIGATION */}
-              <div className="flex px-2 border-b border-gray-100 bg-gray-50 shrink-0 overflow-x-auto custom-scrollbar">
-                {[
-                  { id: 'history', label: 'Lịch sử khám', icon: Calendar },
-                  { id: 'records', label: 'Hồ sơ bệnh án', icon: FileText },
-                  { id: 'payments', label: 'Thanh toán', icon: Wallet },
-                  { id: 'account', label: 'Tài khoản', icon: ShieldCheck }
-                ].map((tab) => (
-                  <button 
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 py-3 px-4 font-bold text-sm border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-                  >
-                    <tab.icon size={16}/> {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* TAB CONTENT */}
-              <div className="flex-1 overflow-y-auto p-6">
-                
-                {/* LỊCH SỬ KHÁM BỆNH */}
-                {activeTab === 'history' && (
-                  <div className="space-y-0 relative before:absolute before:inset-0 before:ml-[13px] before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-gray-200 before:to-transparent animate-in fade-in">
-                    
-                    <div className="relative pl-8 pb-6">
-                      <span className="absolute left-0 top-1 w-7 h-7 bg-blue-100 text-[#2563EB] border border-blue-200 rounded-full flex items-center justify-center -translate-x-2.5 z-10"><Stethoscope size={14}/></span>
-                      <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 hover:shadow-md transition">
-                        <p className="text-xs text-[#2563EB] font-bold mb-1">15/08/2026 - Gần nhất</p>
-                        <h4 className="font-bold text-gray-900">Khám Nội tổng quát</h4>
-                        <p className="text-sm text-gray-600 mt-1">Bác sĩ điều trị: BS Nguyễn Văn Bình</p>
-                      </div>
-                    </div>
-
-                    <div className="relative pl-8 pb-6">
-                      <span className="absolute left-0 top-1 w-7 h-7 bg-gray-100 text-gray-500 border border-gray-200 rounded-full flex items-center justify-center -translate-x-2.5 z-10"><Activity size={14}/></span>
-                      <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 hover:shadow-md transition">
-                        <p className="text-xs text-gray-400 font-bold mb-1">02/08/2026</p>
-                        <h4 className="font-bold text-gray-900">Khám Tim mạch</h4>
-                        <p className="text-sm text-gray-600 mt-1">Bác sĩ điều trị: BS Trần Minh Hải</p>
-                      </div>
-                    </div>
-
-                    <div className="relative pl-8">
-                      <span className="absolute left-0 top-1 w-7 h-7 bg-gray-100 text-gray-500 border border-gray-200 rounded-full flex items-center justify-center -translate-x-2.5 z-10"><Activity size={14}/></span>
-                      <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 hover:shadow-md transition">
-                        <p className="text-xs text-gray-400 font-bold mb-1">20/07/2026</p>
-                        <h4 className="font-bold text-gray-900">Khám Da liễu</h4>
-                        <p className="text-sm text-gray-600 mt-1">Bác sĩ điều trị: BS Lê Minh Hải</p>
-                      </div>
-                    </div>
-
-                  </div>
-                )}
-
-                {/* HỒ SƠ BỆNH ÁN */}
-                {activeTab === 'records' && (
-                  <div className="space-y-4 animate-in fade-in">
-                    <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="bg-white p-3 rounded-xl shadow-sm"><FileText className="text-indigo-600" size={24}/></div>
-                        <div>
-                          <p className="text-sm font-bold text-indigo-900">Tổng số hồ sơ bệnh án</p>
-                          <p className="text-2xl font-black text-indigo-700 mt-1">8 <span className="text-sm font-medium text-indigo-500">hồ sơ lưu trữ</span></p>
+                    <div className="flex gap-5 items-center">
+                      <img src={activePat.avatar} alt="Avatar" className="w-20 h-20 rounded-2xl border-4 border-white/20 shadow-xl"/>
+                      <div>
+                        <h2 className="text-2xl font-bold">{activePat.name}</h2>
+                        <p className="text-gray-300 text-sm mt-1">Mã BN: {activePat.patientCode} • {activePat.gender} • {activePat.age} tuổi</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-sm font-medium">
+                          <p className="flex items-center gap-1.5"><Phone size={14} className="text-gray-400"/> {activePat.phone}</p>
+                          <p className="flex items-center gap-1.5"><Mail size={14} className="text-gray-400"/> {activePat.email}</p>
+                          <p className="flex items-center gap-1.5 w-full"><MapPin size={14} className="text-gray-400"/> {activePat.address}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-indigo-400 font-bold mb-1">Hồ sơ gần nhất</p>
-                        <p className="text-sm font-bold text-indigo-900">15/08/2026</p>
-                      </div>
-                    </div>
-                    
-                    <button className="w-full bg-white border border-gray-200 text-[#2563EB] py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm flex items-center justify-center gap-2">
-                      <Eye size={18}/> Mở chi tiết Bệnh án
-                    </button>
-                  </div>
-                )}
-
-                {/* LỊCH SỬ THANH TOÁN */}
-                {activeTab === 'payments' && (
-                  <div className="animate-in fade-in">
-                    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold">
-                          <tr>
-                            <th className="px-4 py-3">Ngày</th>
-                            <th className="px-4 py-3">Số tiền</th>
-                            <th className="px-4 py-3">Trạng thái</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3 font-medium text-gray-900">15/08/2026</td>
-                            <td className="px-4 py-3 font-bold text-gray-900">550.000đ</td>
-                            <td className="px-4 py-3"><span className="text-green-600 font-bold flex items-center gap-1.5"><CheckCircle2 size={14}/> Đã thanh toán</span></td>
-                          </tr>
-                          <tr className="hover:bg-gray-50">
-                            <td className="px-4 py-3 font-medium text-gray-900">02/08/2026</td>
-                            <td className="px-4 py-3 font-bold text-gray-900">320.000đ</td>
-                            <td className="px-4 py-3"><span className="text-green-600 font-bold flex items-center gap-1.5"><CheckCircle2 size={14}/> Đã thanh toán</span></td>
-                          </tr>
-                          <tr className="bg-red-50/30 hover:bg-red-50">
-                            <td className="px-4 py-3 font-medium text-gray-900">20/07/2026</td>
-                            <td className="px-4 py-3 font-bold text-red-600">450.000đ</td>
-                            <td className="px-4 py-3"><span className="text-orange-500 font-bold flex items-center gap-1.5"><Clock size={14}/> Chờ thanh toán</span></td>
-                          </tr>
-                        </tbody>
-                      </table>
                     </div>
                   </div>
-                )}
 
-                {/* TRẠNG THÁI TÀI KHOẢN */}
-                {activeTab === 'account' && (
-                  <div className="space-y-4 animate-in fade-in">
-                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-green-50 p-2 rounded-lg"><Activity className="text-green-600" size={18}/></div>
-                        <span className="font-bold text-gray-900 text-sm">Trạng thái chung</span>
-                      </div>
-                      <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-lg flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span> Hoạt động</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 p-2 rounded-lg"><Mail className="text-[#2563EB]" size={18}/></div>
-                        <span className="font-bold text-gray-900 text-sm">Xác minh Email</span>
-                      </div>
-                      <span className="text-green-600 text-sm font-bold flex items-center gap-1"><CheckCircle2 size={16}/> Đã xác minh</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 p-2 rounded-lg"><Phone className="text-[#2563EB]" size={18}/></div>
-                        <span className="font-bold text-gray-900 text-sm">Xác minh SĐT</span>
-                      </div>
-                      <span className="text-green-600 text-sm font-bold flex items-center gap-1"><CheckCircle2 size={16}/> Đã xác minh</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-gray-100 p-2 rounded-lg"><ShieldCheck className="text-gray-600" size={18}/></div>
-                        <span className="font-bold text-gray-900 text-sm">Khóa tài khoản</span>
-                      </div>
-                      <span className="text-gray-500 text-sm font-bold flex items-center gap-1"><Unlock size={16}/> Không bị khóa</span>
-                    </div>
+                  <div className="flex px-2 border-b border-gray-100 bg-gray-50 shrink-0 overflow-x-auto custom-scrollbar">
+                    {[
+                      { id: 'history', label: 'Lịch sử khám', icon: CalendarDays },
+                      { id: 'records', label: 'Hồ sơ bệnh án', icon: FileText },
+                      { id: 'payments', label: 'Thanh toán', icon: Wallet },
+                      { id: 'account', label: 'Tài khoản', icon: ShieldCheck }
+                    ].map((tab) => (
+                      <button 
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 py-3 px-4 font-bold text-sm border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                      >
+                        <tab.icon size={16}/> {tab.label}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
+
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {/* Placeholder content for Tabs */}
+                    {activeTab === 'history' && (
+                      <div className="text-center py-10 text-gray-400">
+                        <CalendarDays size={40} className="mx-auto mb-3 opacity-50" />
+                        <p>Lịch sử khám của bệnh nhân sẽ hiển thị ở đây.</p>
+                      </div>
+                    )}
+                    {activeTab === 'records' && (
+                       <div className="text-center py-10 text-gray-400">
+                       <FileText size={40} className="mx-auto mb-3 opacity-50" />
+                       <p>Hồ sơ bệnh án chi tiết sẽ hiển thị ở đây.</p>
+                     </div>
+                    )}
+                    {activeTab === 'account' && (
+                      <div className="space-y-4 animate-in fade-in">
+                        <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-gray-100 p-2 rounded-lg"><ShieldCheck className="text-gray-600" size={18}/></div>
+                            <span className="font-bold text-gray-900 text-sm">Trạng thái tài khoản</span>
+                          </div>
+                          <span className={`text-sm font-bold flex items-center gap-1 ${activePat.status === 'Khóa tài khoản' ? 'text-red-500' : 'text-green-600'}`}>
+                            {activePat.status === 'Khóa tài khoản' ? <Lock size={16}/> : <Unlock size={16}/>} 
+                            {activePat.status}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400">Chưa chọn bệnh nhân</div>
+              )}
             </div>
           </div>
         </div>
       </main>
 
-      {/* ==========================================
-          MODAL: THÊM BỆNH NHÂN MỚI
-      ========================================== */}
+      {/* MODAL: THÊM BỆNH NHÂN */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
@@ -449,68 +419,57 @@ export default function PatientManagementPage() {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-              {/* Upload Ảnh */}
-              <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 text-gray-400">
-                  <User size={32}/>
-                </div>
-                <div>
-                  <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition">Tải ảnh lên</button>
-                  <p className="text-xs text-gray-500 mt-2">JPG, PNG. Max 2MB.</p>
-                </div>
-              </div>
-
-              {/* Form Grid */}
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Họ và tên <span className="text-red-500">*</span></label>
-                  <input type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nguyễn Văn A"/>
+                  <input value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nguyễn Văn A"/>
                 </div>
                 <div className="col-span-2 md:col-span-1 grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ngày sinh</label>
-                    <input type="date" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors"/>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ngày sinh (DD/MM/YYYY)</label>
+                    <input value={addForm.dob} onChange={e => setAddForm({...addForm, dob: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors"/>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Giới tính</label>
-                    <select className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors">
-                      <option>Nam</option><option>Nữ</option>
+                    <select value={addForm.gender} onChange={e => setAddForm({...addForm, gender: e.target.value})} className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors">
+                      <option value="Nam">Nam</option><option value="Nữ">Nữ</option>
                     </select>
                   </div>
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Số điện thoại <span className="text-red-500">*</span></label>
-                  <input type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="09xx..."/>
+                  <input value={addForm.phone} onChange={e => setAddForm({...addForm, phone: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="09xx..."/>
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
-                  <input type="email" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="email@example.com"/>
+                  <input value={addForm.email} onChange={e => setAddForm({...addForm, email: e.target.value})} type="email" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="email@example.com"/>
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Số CCCD / CMND</label>
-                  <input type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nhập số CCCD"/>
+                  <input value={addForm.cccd} onChange={e => setAddForm({...addForm, cccd: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nhập số CCCD"/>
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Số BHYT</label>
-                  <input type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nhập mã số BHYT (nếu có)"/>
+                  <input value={addForm.bhyt} onChange={e => setAddForm({...addForm, bhyt: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Nhập mã số BHYT"/>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Địa chỉ liên hệ</label>
-                  <input type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Số nhà, đường, phường/xã, quận/huyện..."/>
+                  <input value={addForm.address} onChange={e => setAddForm({...addForm, address: e.target.value})} type="text" className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors" placeholder="Số nhà, đường, phường/xã..."/>
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Trạng thái tài khoản</label>
-                  <select className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors">
-                    <option>Hoạt động</option><option>Chờ xác minh</option><option>Khóa tài khoản</option>
+                  <select value={addForm.status} onChange={e => setAddForm({...addForm, status: e.target.value})} className="w-full p-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2563EB] outline-none text-sm bg-gray-50 focus:bg-white transition-colors">
+                    <option value="Hoạt động">Hoạt động</option>
+                    <option value="Chờ xác minh">Chờ xác minh</option>
                   </select>
                 </div>
               </div>
             </div>
 
             <div className="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-              <button onClick={() => setIsAddModalOpen(false)} className="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition">Hủy</button>
-              <button className="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-md transition flex items-center gap-2">
-                <CheckCircle2 size={18}/> Lưu hồ sơ
+              <button disabled={isSubmitting} onClick={() => setIsAddModalOpen(false)} className="px-5 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition">Hủy</button>
+              <button disabled={isSubmitting} onClick={handleAddSubmit} className="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-md transition flex items-center gap-2">
+                {isSubmitting ? <Loader2 size={18} className="animate-spin"/> : <CheckCircle2 size={18}/>} Lưu hồ sơ
               </button>
             </div>
           </div>
@@ -519,4 +478,4 @@ export default function PatientManagementPage() {
 
     </div>
   );
-}
+} 

@@ -1,22 +1,47 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, CalendarDays, FileText, Pill, TestTube, 
   Bell, Settings, LogOut, Search, Activity, User, Building2, 
   ShieldCheck, History, Wallet, Server, HardDrive, Lock, 
-  ArrowUpRight, Download, CheckCircle2, TrendingUp, Star, DollarSign, Printer, Bot
+  Download, CheckCircle2, TrendingUp, Printer, Bot, Loader2
 } from 'lucide-react';
+
+import { getAdminDashboardData } from '@/app/admin/dashboard/actions';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [dateRange, setDateRange] = useState('Tháng này');
+  
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getAdminDashboardData();
+      if (res.success && res.data) {
+        setData(res.data);
+      } else {
+        router.push('/login');
+      }
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [router]);
 
   const handleLogout = () => {
-    // localStorage.removeItem('token');
+    // router.push('/login'); // Có thể gắn api xóa cookie ở đây
     router.push('/login');
   };
+
+  if (isLoading || !data) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-10 h-10 text-[#2563EB] animate-spin" /></div>;
+  }
+
+  // Cấu hình màu cho biểu đồ Tỷ trọng chuyên khoa
+  const specColors = ['bg-[#2563EB]', 'bg-red-500', 'bg-yellow-500', 'bg-green-500'];
 
   return (
     <div className="min-h-screen flex bg-gray-50 font-sans text-gray-800 overflow-hidden">
@@ -24,7 +49,7 @@ export default function AdminDashboardPage() {
       {/* ==========================================
           1. SIDEBAR
       ========================================== */}
-      <aside className="w-64 bg-[#0F172A] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 shadow-xl">
+      <aside className="w-64 bg-[#0F172A] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 shadow-xl z-20">
         <div className="h-20 flex items-center justify-center border-b border-gray-800 bg-[#0B1120]">
           <div className="flex items-center gap-2 text-white">
             <Activity className="text-[#2563EB]" size={28}/>
@@ -33,7 +58,6 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-6 px-3 custom-scrollbar">
-          
           {/* Nhóm 1: Tổng quan */}
           <div className="space-y-1">
             <p className="px-4 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">1. Tổng quan</p>
@@ -59,10 +83,7 @@ export default function AdminDashboardPage() {
             </Link>
             <Link href="/admin/prescriptions" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
               <Pill size={18}/> Quản lý Đơn thuốc
-            </Link>
-            <Link href="/admin/lab-tests" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
-              <TestTube size={18}/> Quản lý Xét nghiệm
-            </Link>
+            </Link>          
           </div>
 
           {/* Nhóm 3: Quản trị hệ thống */}
@@ -86,7 +107,6 @@ export default function AdminDashboardPage() {
               <Settings size={18}/> Cài đặt chung
             </Link>
           </div>
-
         </div>
 
         <div className="p-4 border-t border-gray-800 bg-[#0B1120]">
@@ -141,7 +161,7 @@ export default function AdminDashboardPage() {
         {/* SCROLLABLE CONTENT */}
         <div className="flex-1 overflow-y-auto p-8 animate-in fade-in duration-500">
           
-          {/* CONTROL BAR (BỘ LỌC & EXPORT) */}
+          {/* CONTROL BAR */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8 flex justify-between items-center">
             <div className="flex gap-4 w-1/2">
               <select 
@@ -152,12 +172,7 @@ export default function AdminDashboardPage() {
                 <option>Hôm nay</option>
                 <option>Tuần này</option>
                 <option>Tháng này</option>
-                <option>Năm nay</option>
-              </select>
-              <select className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#2563EB] outline-none">
-                <option>Tất cả Bác sĩ</option>
-                <option>BS. Nguyễn Văn Bình</option>
-                <option>BS. Trần Thị An</option>
+                <option>Tất cả thời gian</option>
               </select>
             </div>
             <div className="flex gap-2">
@@ -170,16 +185,16 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* 8 KPI CARDS */}
+          {/* 8 KPI CARDS (DỮ LIỆU THẬT TỪ DB) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             {[
-              { label: 'Bệnh nhân', value: '2,580', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+12%' },
-              { label: 'Lịch khám', value: '142', icon: CalendarDays, color: 'text-green-600', bg: 'bg-green-50', trend: '+5%' },
-              { label: 'Doanh thu', value: '680 Tr', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: '+18%' },
-              { label: 'Bác sĩ', value: '35', icon: User, color: 'text-indigo-600', bg: 'bg-indigo-50', trend: 'Ổn định' },
-              { label: 'Đơn thuốc', value: '5,200', icon: Pill, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+8%' },
-              { label: 'Xét nghiệm', value: '2,150', icon: TestTube, color: 'text-orange-600', bg: 'bg-orange-50', trend: '+2%' },
-              { label: 'Khoa phòng', value: '8', icon: Building2, color: 'text-cyan-600', bg: 'bg-cyan-50', trend: 'Ổn định' },
+              { label: 'Bệnh nhân', value: data.kpis.patients.toLocaleString('vi-VN'), icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+12%' },
+              { label: 'Lịch khám', value: data.kpis.appointments.toLocaleString('vi-VN'), icon: CalendarDays, color: 'text-green-600', bg: 'bg-green-50', trend: '+5%' },
+              { label: 'Doanh thu dự kiến', value: (data.kpis.revenue / 1000000).toFixed(1) + ' Tr', icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: '+18%' },
+              { label: 'Bác sĩ', value: data.kpis.doctors, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-50', trend: 'Ổn định' },
+              { label: 'Đơn thuốc', value: data.kpis.prescriptions.toLocaleString('vi-VN'), icon: Pill, color: 'text-purple-600', bg: 'bg-purple-50', trend: '+8%' },
+              { label: 'Xét nghiệm', value: data.kpis.labTests.toLocaleString('vi-VN'), icon: TestTube, color: 'text-orange-600', bg: 'bg-orange-50', trend: '+2%' },
+              { label: 'Khoa phòng', value: data.kpis.departments, icon: Building2, color: 'text-cyan-600', bg: 'bg-cyan-50', trend: 'Ổn định' },
               { label: 'AI Status', value: 'Online', icon: Bot, color: 'text-pink-600', bg: 'bg-pink-50', trend: '100% Uptime' },
             ].map((kpi, idx) => (
               <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
@@ -199,8 +214,7 @@ export default function AdminDashboardPage() {
 
           {/* GRID LAYOUT: MAIN CHARTS */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            
-            {/* Chart 1: Doanh thu */}
+            {/* Chart 1: Doanh thu (Giao diện giữ nguyên) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2"><Wallet className="text-[#2563EB]" size={18}/> Biểu đồ Doanh thu (6 tháng)</h3>
@@ -224,7 +238,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Chart 2: Lượng Bệnh nhân */}
+            {/* Chart 2: Lượng Bệnh nhân (Giao diện giữ nguyên) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2"><TrendingUp className="text-green-500" size={18}/> Bệnh nhân theo Tuần</h3>
@@ -250,33 +264,27 @@ export default function AdminDashboardPage() {
           {/* GRID LAYOUT: TABLES & LISTS */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* 1. Tỷ trọng chuyên khoa */}
+            {/* 1. Tỷ trọng chuyên khoa (Real Data) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-6"><Building2 size={20} className="text-purple-500"/> Tỷ trọng chuyên khoa</h2>
+              <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-6"><Building2 size={20} className="text-purple-500"/> Tỷ trọng khám theo khoa</h2>
               <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between text-sm font-bold text-gray-700 mb-2"><span>Nội tổng quát</span><span>38%</span></div>
-                  <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-[#2563EB] h-3 rounded-full" style={{width: '38%'}}></div></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm font-bold text-gray-700 mb-2"><span>Tim mạch</span><span>24%</span></div>
-                  <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-red-500 h-3 rounded-full" style={{width: '24%'}}></div></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm font-bold text-gray-700 mb-2"><span>Nhi khoa</span><span>20%</span></div>
-                  <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-yellow-500 h-3 rounded-full" style={{width: '20%'}}></div></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm font-bold text-gray-700 mb-2"><span>Da liễu</span><span>18%</span></div>
-                  <div className="w-full bg-gray-100 rounded-full h-3"><div className="bg-green-500 h-3 rounded-full" style={{width: '18%'}}></div></div>
-                </div>
+                {data.specDistribution.length > 0 ? data.specDistribution.map((spec: any, idx: number) => (
+                  <div key={idx}>
+                    <div className="flex justify-between text-sm font-bold text-gray-700 mb-2"><span>{spec.name}</span><span>{spec.percentage}%</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-3">
+                      <div className={`${specColors[idx % specColors.length]} h-3 rounded-full`} style={{width: `${spec.percentage}%`}}></div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-gray-500 text-sm text-center">Chưa có dữ liệu lịch khám</div>
+                )}
               </div>
             </div>
 
-            {/* 2. TOP BÁC SĨ (Bảng) */}
+            {/* 2. TOP BÁC SĨ (Real Data) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
               <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2"><User size={18} className="text-indigo-600"/> Top Bác sĩ (Số ca khám)</h3>
+                <h3 className="font-bold text-gray-900 flex items-center gap-2"><User size={18} className="text-indigo-600"/> Top Bác sĩ (Số ca hẹn)</h3>
               </div>
               <div className="flex-1 overflow-auto">
                 <table className="w-full text-left text-sm">
@@ -284,19 +292,23 @@ export default function AdminDashboardPage() {
                     <tr><th className="px-5 py-4">Bác sĩ</th><th className="px-5 py-4 text-center">Số ca khám</th></tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    <tr className="hover:bg-indigo-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">BS. Nguyễn Văn Bình</td><td className="px-5 py-4 text-center font-bold text-[#2563EB]">245</td></tr>
-                    <tr className="hover:bg-indigo-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">BS. Trần Hùng</td><td className="px-5 py-4 text-center font-bold text-[#2563EB]">220</td></tr>
-                    <tr className="hover:bg-indigo-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">BS. Lê Nam</td><td className="px-5 py-4 text-center font-bold text-[#2563EB]">205</td></tr>
-                    <tr className="hover:bg-indigo-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">BS. Trần Thị An</td><td className="px-5 py-4 text-center font-bold text-[#2563EB]">180</td></tr>
+                    {data.topDoctors.length > 0 ? data.topDoctors.map((doc: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-indigo-50/50 transition">
+                        <td className="px-5 py-4 font-bold text-gray-900">{doc.name}</td>
+                        <td className="px-5 py-4 text-center font-bold text-[#2563EB]">{doc.count}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={2} className="px-5 py-8 text-center text-gray-500">Chưa có bác sĩ nào nhận lịch.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* 3. TOP BỆNH & THUỐC (Bảng) */}
+            {/* 3. TOP BỆNH & THUỐC (Real Data) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
               <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2"><Activity size={18} className="text-orange-600"/> Top Bệnh phổ biến</h3>
+                <h3 className="font-bold text-gray-900 flex items-center gap-2"><Activity size={18} className="text-orange-600"/> Top Chẩn đoán phổ biến</h3>
               </div>
               <div className="flex-1 overflow-auto">
                 <table className="w-full text-left text-sm">
@@ -304,10 +316,14 @@ export default function AdminDashboardPage() {
                     <tr><th className="px-5 py-4">Loại bệnh</th><th className="px-5 py-4 text-center">Tỷ lệ</th></tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    <tr className="hover:bg-orange-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">Viêm họng cấp</td><td className="px-5 py-4 text-center font-bold text-orange-600">35%</td></tr>
-                    <tr className="hover:bg-orange-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">Cảm cúm</td><td className="px-5 py-4 text-center font-bold text-orange-600">28%</td></tr>
-                    <tr className="hover:bg-orange-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">Đau dạ dày</td><td className="px-5 py-4 text-center font-bold text-orange-600">17%</td></tr>
-                    <tr className="hover:bg-orange-50/50 transition"><td className="px-5 py-4 font-bold text-gray-900">Dị ứng</td><td className="px-5 py-4 text-center font-bold text-orange-600">12%</td></tr>
+                    {data.topDiseases.length > 0 ? data.topDiseases.map((dis: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-orange-50/50 transition">
+                        <td className="px-5 py-4 font-bold text-gray-900">{dis.name}</td>
+                        <td className="px-5 py-4 text-center font-bold text-orange-600">{dis.percentage}%</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={2} className="px-5 py-8 text-center text-gray-500">Chưa có hồ sơ bệnh án nào.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -316,7 +332,7 @@ export default function AdminDashboardPage() {
             {/* 4. SYSTEM MONITOR (Chiếm toàn bộ 3 cột phía dưới) */}
             <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-2">
               <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2 border-b pb-3">
-                <Server size={18} className="text-gray-500"/> Giám sát máy chủ
+                <Server size={18} className="text-gray-500"/> Giám sát máy chủ (TiDB)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
@@ -331,16 +347,16 @@ export default function AdminDashboardPage() {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:bg-gray-100 transition">
                   <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
-                    <HardDrive size={18} className="text-purple-500"/> Lưu trữ (Storage)
+                    <HardDrive size={18} className="text-purple-500"/> Serverless Storage
                   </div>
-                  <span className="text-sm font-bold text-yellow-600">72% (Còn 500GB)</span>
+                  <span className="text-sm font-bold text-[#2563EB]">Đã kết nối</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:bg-gray-100 transition">
                   <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
-                    <Users size={18} className="text-orange-500"/> Đang truy cập
+                    <Users size={18} className="text-orange-500"/> Người dùng hệ thống
                   </div>
-                  <span className="text-sm font-bold text-gray-900">45 Users</span>
+                  <span className="text-sm font-bold text-gray-900">{data.kpis.patients + data.kpis.doctors} Users</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:bg-gray-100 transition">

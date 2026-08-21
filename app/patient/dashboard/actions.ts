@@ -16,16 +16,24 @@ export async function getPatientDashboardData() {
     const userId = parseInt(userIdStr);
 
     // Truy vấn song song (Parallel Queries) để tối ưu tốc độ cho TiDB
-    // Truy vấn song song (Parallel Queries) để tối ưu tốc độ cho TiDB
-    const [user, metric, appointments, prescriptions, labTests] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userId }, select: { fullName: true, patientCode: true } }),
+    let user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, patientCode: true } });
+    if (user && (!user.patientCode || user.patientCode === 'BN-NEW')) {
+      const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${user.id.toString().padStart(4, '0')}`;
+      await prisma.user.update({
+        where: { id: userId },
+        data: { patientCode: generatedCode }
+      });
+      user.patientCode = generatedCode;
+    }
+
+    const [metric, appointments, prescriptions, labTests] = await Promise.all([
       prisma.healthMetric.findUnique({ where: { patientId: userId } }),
       
       // ĐÃ SỬA: Dùng createdAt để sắp xếp, và lấy thêm thông tin Bác sĩ
       prisma.appointment.findMany({ 
         where: { patientId: userId }, 
         orderBy: { createdAt: 'desc' }, 
-        take: 2,
+        take: 5,
         include: { doctor: { select: { fullName: true } } } 
       }),
       

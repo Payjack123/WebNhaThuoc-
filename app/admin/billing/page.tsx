@@ -71,10 +71,7 @@ export default function AdminBillingPage() {
             </Link>
             <Link href="/admin/prescriptions" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
               <Pill size={18}/> Quản lý Đơn thuốc
-            </Link>
-            <Link href="/admin/lab-tests" className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-800 hover:text-white rounded-xl transition-all text-sm">
-              <TestTube size={18}/> Quản lý Xét nghiệm
-            </Link>
+            </Link>        
           </div>
 
           <div className="space-y-1">
