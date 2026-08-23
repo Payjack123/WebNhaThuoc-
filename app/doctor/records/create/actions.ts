@@ -28,6 +28,11 @@ export async function getInitialCreateData(patientId: number) {
       orderBy: { bookingDate: 'desc' }
     });
 
+    const latestExamination = await prisma.examination.findFirst({
+      where: { patientId },
+      orderBy: { createdAt: 'desc' }
+    });
+
     let age = 'N/A';
     let dobStr = 'Chưa cập nhật';
     if (patient.dob) {
@@ -36,9 +41,9 @@ export async function getInitialCreateData(patientId: number) {
       if (dobStr.includes('/')) year = dobStr.split('/')[2];
       else if (dobStr.includes('-')) year = dobStr.split('-')[0];
       else year = dobStr.substr(-4);
-      
+
       if (year && !isNaN(parseInt(year))) {
-          age = (new Date().getFullYear() - parseInt(year)).toString();
+        age = (new Date().getFullYear() - parseInt(year)).toString();
       }
     }
 
@@ -66,6 +71,15 @@ export async function getInitialCreateData(patientId: number) {
         appointment: appointment ? {
           id: appointment.id,
           reason: appointment.reason || ''
+        } : null,
+        latestExamination: latestExamination ? {
+          symptoms: latestExamination.symptoms || '',
+          medicalHistory: latestExamination.medicalHistory || '',
+          clinicalExam: latestExamination.clinicalExam || '',
+          diagnosis: latestExamination.diagnosis || '',
+          secondaryDiagnosis: latestExamination.secondaryDiagnosis || '',
+          treatment: latestExamination.treatment || '',
+          notes: latestExamination.notes || ''
         } : null
       }
     };
@@ -82,7 +96,7 @@ export async function createDoctorMedicalRecord(data: any) {
     if (!userIdStr) return { success: false, message: 'Chưa đăng nhập' };
     const doctorId = parseInt(userIdStr);
 
-    const { patientId, appointmentId, symptoms, medicalHistory, diagnosis, treatment, notes, vitals } = data;
+    const { patientId, appointmentId, reason, symptoms, medicalHistory, clinicalExam, diagnosis, secondaryDiagnosis, treatment, notes, vitals, followUpDate, followUpTime, followUpReason } = data;
 
     if (!patientId || !diagnosis || !symptoms) {
       return { success: false, message: 'Vui lòng điền đầy đủ thông tin bắt buộc' };
@@ -99,7 +113,7 @@ export async function createDoctorMedicalRecord(data: any) {
           specialty: 'Khám chung',
           bookingDate: now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
           bookingTime: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-          reason: 'Tạo hồ sơ bệnh án trực tiếp',
+          reason: reason || 'Tạo hồ sơ bệnh án trực tiếp',
           status: 'HOÀN THÀNH'
         }
       });
@@ -114,9 +128,14 @@ export async function createDoctorMedicalRecord(data: any) {
         appointmentId: finalAppointmentId,
         symptoms: symptoms,
         medicalHistory: medicalHistory,
+        clinicalExam: clinicalExam,
         diagnosis: diagnosis,
+        secondaryDiagnosis: secondaryDiagnosis,
         treatment: treatment,
-        notes: notes
+        notes: notes,
+        followUpDate: followUpDate || null,
+        followUpTime: followUpTime || null,
+        followUpReason: followUpReason || null
       }
     });
 

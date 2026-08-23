@@ -21,31 +21,37 @@ export async function getDoctorPatientsData() {
     // 1. Lấy tất cả lịch khám của bác sĩ này
     // BỔ SUNG: patientId: { not: doctorId } -> LOẠI BỎ CHÍNH BÁC SĨ NẾU VÔ TÌNH ĐẶT LỊCH
     const appointments = await prisma.appointment.findMany({
-      where: { 
+      where: {
         doctorId: doctorId,
         patientId: { not: doctorId } // <-- ĐÂY LÀ DÒNG CHỐNG BÁC SĨ HIỆN TRONG DANH SÁCH BỆNH NHÂN
       },
       include: {
         patient: {
-          include: { healthMetric: true }
+          include: { 
+            healthMetric: true,
+            examinationsAsPatient: {
+              orderBy: { createdAt: 'desc' },
+              take: 1
+            }
+          }
         },
         examination: true
       },
-      orderBy: { bookingDate: 'desc' }
+      orderBy: { id: 'desc' }
     });
 
     if (appointments.length === 0) {
-      return { 
-        success: true, 
-        data: { 
+      return {
+        success: true,
+        data: {
           doctorInfo: {
             name: doctor.fullName,
             avatar: doctor.avatar || `https://ui-avatars.com/api/?name=${doctor.fullName.replace(/ /g, '+')}&background=172554&color=fff`,
             rating: doctor.doctorProfile?.rating || 5
           },
-          patients: [], 
-          kpis: { total: 0, new: 0, inTreatment: 0, completed: 0 } 
-        } 
+          patients: [],
+          kpis: { total: 0, new: 0, inTreatment: 0, completed: 0 }
+        }
       };
     }
 
@@ -55,7 +61,7 @@ export async function getDoctorPatientsData() {
 
     appointments.forEach(apt => {
       const pId = apt.patientId;
-      
+
       // Bỏ qua nếu bằng một cách nào đó ID bệnh nhân lại trùng với ID Bác sĩ
       if (pId === doctorId) return;
 
@@ -73,11 +79,14 @@ export async function getDoctorPatientsData() {
           } else {
             year = dobStr.substr(-4); // Lấy 4 ký tự cuối làm năm nếu không rõ định dạng
           }
-          
+
           if (year && !isNaN(parseInt(year))) {
-             age = (new Date().getFullYear() - parseInt(year)).toString();
+            age = (new Date().getFullYear() - parseInt(year)).toString();
           }
         }
+
+        // Find the latest examination for this patient
+        let lastRecordId = apt.patient.examinationsAsPatient?.[0]?.id || null;
 
         uniquePatientsMap.set(pId, {
           id: apt.patient.id,
@@ -94,9 +103,9 @@ export async function getDoctorPatientsData() {
           lastVisit: apt.bookingDate,
           status: apt.status === 'HOÀN THÀNH' ? 'Đã khỏi' : apt.status === 'ĐÃ XÁC NHẬN' ? 'Tái khám' : 'Đang điều trị',
           statusColor: apt.status === 'HOÀN THÀNH' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200',
-          lastRecordId: apt.examination?.id || null
+          lastRecordId: lastRecordId
         });
-        
+
         historyMap.set(pId, []);
       }
 
@@ -119,7 +128,7 @@ export async function getDoctorPatientsData() {
     const todayStr = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     let inTreatment = 0;
     let completedCount = 0;
-    
+
     formattedPatients.forEach(p => {
       if (p.status === 'Đang điều trị' || p.status === 'Tái khám') inTreatment++;
       if (p.status === 'Đã khỏi') completedCount++;
