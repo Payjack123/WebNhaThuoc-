@@ -7,7 +7,7 @@ export async function getAdminAppointmentsData() {
   try {
     const appointments = await prisma.appointment.findMany({
       include: {
-        patient: true,
+        patient: { include: { patientProfile: true } },
         doctor: {
           include: { doctorProfile: true }
         }
@@ -39,7 +39,7 @@ export async function getAdminAppointmentsData() {
         id: `LK${apt.id.toString().padStart(4, '0')}`,
         patientId: apt.patientId,
         patient: apt.patient.fullName,
-        patientCode: apt.patient.patientCode || `BN${apt.patientId}`,
+        patientCode: apt.patient.patientProfile?.patientCode || `BN${apt.patientId}`,
         phone: apt.patient.phone || 'Chưa cập nhật',
         age: age,
         gender: apt.patient.gender || 'Nam',

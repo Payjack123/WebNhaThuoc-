@@ -18,6 +18,7 @@ export async function getPatientMedicalRecordsData() {
     let patient = await prisma.user.findUnique({
       where: { id: patientId },
       include: {
+        patientProfile: true,
         healthMetric: true,
         examinationsAsPatient: {
           include: {
@@ -50,11 +51,12 @@ export async function getPatientMedicalRecordsData() {
       return { success: false, message: 'Không tìm thấy thông tin bệnh nhân' };
     }
 
-    if (!patient.patientCode || patient.patientCode === 'BN-NEW') {
+    if (!patient.patientProfile?.patientCode || patient.patientProfile?.patientCode === 'BN-NEW') {
       const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${patient.id.toString().padStart(4, '0')}`;
-      await prisma.user.update({
-        where: { id: patientId },
-        data: { patientCode: generatedCode }
+      await prisma.patientProfile.upsert({
+        where: { userId: patientId },
+        update: { patientCode: generatedCode },
+        create: { userId: patientId, patientCode: generatedCode }
       });
     }
 
@@ -63,7 +65,7 @@ export async function getPatientMedicalRecordsData() {
     // 1. Chuẩn bị thông tin cá nhân
     const patientInfo = {
       name: patient.fullName,
-      id: patient.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
+      id: patient.patientProfile?.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
       dob: patient.dob || 'Chưa cập nhật',
       gender: patient.gender || 'Nam',
       phone: patient.phone || 'Chưa cập nhật',
@@ -73,7 +75,7 @@ export async function getPatientMedicalRecordsData() {
       healthStatus: patient.healthMetric?.healthStatus || 'Bình thường',
       aiMessage: patient.healthMetric?.aiMessage || 'Không có ghi chú thêm.',
       allergies: patient.healthMetric?.allergies || 'Chưa cập nhật',
-      bhyt: patient.bhyt || 'Chưa cập nhật',
+      bhyt: patient.patientProfile?.bhyt || 'Chưa cập nhật',
       avatar: patient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.fullName)}&background=2563EB&color=fff`,
     };
 

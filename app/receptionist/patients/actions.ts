@@ -16,26 +16,16 @@ export async function getPatients(searchQuery: string, statusFilter: string) {
       whereClause.OR = [
         { fullName: { contains: searchQuery } },
         { phone: { contains: searchQuery } },
-        { patientCode: { contains: searchQuery } },
-        { cccd: { contains: searchQuery } }
+        { patientProfile: { patientCode: { contains: searchQuery } } },
+        { patientProfile: { cccd: { contains: searchQuery } } }
       ];
     }
 
     const patients = await prisma.user.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        patientCode: true,
-        fullName: true,
-        phone: true,
-        gender: true,
-        dob: true,
-        address: true,
-        cccd: true,
-        bhyt: true,
-        status: true,
-        createdAt: true,
+      include: {
+        patientProfile: true,
         appointmentsAsPatient: {
           orderBy: [
             { bookingDate: 'desc' },
@@ -63,14 +53,14 @@ export async function getPatients(searchQuery: string, statusFilter: string) {
 
       return {
         id: p.id,
-        patientCode: p.patientCode || 'Chưa có',
+        patientCode: p.patientProfile?.patientCode || 'Chưa có',
         name: p.fullName,
         phone: p.phone || 'Chưa cập nhật',
         gender: p.gender || 'Khác',
         age: age,
         address: p.address || 'Chưa cập nhật',
-        cccd: p.cccd || 'Chưa cập nhật',
-        bhyt: p.bhyt || 'Chưa cập nhật',
+        cccd: p.patientProfile?.cccd || 'Chưa cập nhật',
+        bhyt: p.patientProfile?.bhyt || 'Chưa cập nhật',
         status: p.status,
         createdAt: new Date(p.createdAt).toLocaleDateString('vi-VN'),
         latestAppointment: latestAppointment ? {

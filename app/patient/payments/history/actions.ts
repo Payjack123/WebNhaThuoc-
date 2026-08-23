@@ -17,6 +17,7 @@ export async function getPaymentHistoryData() {
     const patient = await prisma.user.findUnique({
       where: { id: patientId },
       include: {
+        patientProfile: true,
         appointmentsAsPatient: {
           include: {
             doctor: {
@@ -39,7 +40,7 @@ export async function getPaymentHistoryData() {
 
     const patientInfo = {
       name: patient.fullName,
-      code: patient.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
+      code: patient.patientProfile?.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
       avatar: patient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.fullName)}&background=2563EB&color=fff`,
     };
 
@@ -56,7 +57,7 @@ export async function getPaymentHistoryData() {
       const medCost = (patient.prescriptions[idx]?.items.length || 0) * 50000;
 
       const rawTotal = basePrice + labCost + medCost;
-      const insuranceDiscount = patient.bhyt ? Math.round(basePrice * 0.2) : 0;
+      const insuranceDiscount = patient.patientProfile?.bhyt ? Math.round(basePrice * 0.2) : 0;
       const finalAmount = rawTotal - insuranceDiscount;
 
       // Classify status

@@ -14,31 +14,40 @@ export async function getPatientSettingsData() {
     const patientId = parseInt(userIdStr, 10);
 
     let patient = await prisma.user.findUnique({
-      where: { id: patientId }
+      where: { id: patientId },
+      include: { patientProfile: true }
     });
 
     if (!patient) return { success: false, message: 'Không tìm thấy tài khoản' };
 
-    if (!patient.patientCode || patient.patientCode === 'BN-NEW') {
+    if (!patient.patientProfile?.patientCode || patient.patientProfile?.patientCode === 'BN-NEW') {
       const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${patient.id.toString().padStart(4, '0')}`;
-      await prisma.user.update({
-        where: { id: patientId },
-        data: { patientCode: generatedCode }
+      await prisma.patientProfile.upsert({
+        where: { userId: patientId },
+        update: { patientCode: generatedCode },
+        create: { userId: patientId, patientCode: generatedCode }
       });
-      patient.patientCode = generatedCode;
     }
+
+    // Re-fetch to get updated patientProfile
+    patient = await prisma.user.findUnique({
+      where: { id: patientId },
+      include: { patientProfile: true }
+    });
+
+    if (!patient) return { success: false, message: 'Không tìm thấy tài khoản' };
 
     return {
       success: true,
       data: {
         id: patient.id,
-        patientCode: patient.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
+        patientCode: patient.patientProfile?.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
         fullName: patient.fullName,
         email: patient.email,
         phone: patient.phone || '',
         dob: patient.dob || '',
         gender: patient.gender || 'Nam',
-        cccd: patient.cccd || '',
+        cccd: patient.patientProfile?.cccd || '',
         address: patient.address || '',
         avatar: patient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.fullName)}&background=2563EB&color=fff&size=128`,
       }
@@ -66,10 +75,18 @@ export async function updatePatientProfile(data: any) {
         phone: data.phone,
         dob: data.dob,
         gender: data.gender,
-        cccd: data.cccd,
         address: data.address,
       }
     });
+
+    // Cập nhật cccd vào PatientProfile
+    if (data.cccd !== undefined) {
+      await prisma.patientProfile.upsert({
+        where: { userId: patientId },
+        update: { cccd: data.cccd },
+        create: { userId: patientId, cccd: data.cccd }
+      });
+    }
 
     return { success: true, message: 'Cập nhật hồ sơ thành công!' };
   } catch (error: any) {

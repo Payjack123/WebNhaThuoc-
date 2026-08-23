@@ -16,6 +16,7 @@ export async function getDoctorMedicalRecordById(recordId: number) {
         appointment: true,
         patient: {
           include: {
+            patientProfile: true,
             healthMetric: true,
             prescriptions: { include: { items: true }, orderBy: { createdAt: 'desc' } },
             labTests: { orderBy: { date: 'desc' } },
@@ -37,17 +38,17 @@ export async function getDoctorMedicalRecordById(recordId: number) {
     let treatmentStr = record.treatment || '';
     let notesStr = record.notes || '';
     if (!record.treatment && notesStr.startsWith('[Hướng điều trị: ')) {
-        const endIdx = notesStr.indexOf(']');
-        if (endIdx !== -1) {
-            treatmentStr = notesStr.substring('[Hướng điều trị: '.length, endIdx);
-            notesStr = notesStr.substring(endIdx + 1).trim();
-        }
+      const endIdx = notesStr.indexOf(']');
+      if (endIdx !== -1) {
+        treatmentStr = notesStr.substring('[Hướng điều trị: '.length, endIdx);
+        notesStr = notesStr.substring(endIdx + 1).trim();
+      }
     }
 
     let age = 'N/A';
     if ((record as any).patient.dob) {
-       const year = (record as any).patient.dob.split('/')[2] || (record as any).patient.dob.split('-')[0];
-       if (year) age = (new Date().getFullYear() - parseInt(year)).toString();
+      const year = (record as any).patient.dob.split('/')[2] || (record as any).patient.dob.split('-')[0];
+      if (year) age = (new Date().getFullYear() - parseInt(year)).toString();
     }
 
     const examDateStr = new Date(record.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -55,10 +56,11 @@ export async function getDoctorMedicalRecordById(recordId: number) {
 
     const formattedRecord = {
       id: record.id,
-      baCode: `BA-${new Date(record.createdAt).getFullYear().toString().slice(2)}${String(new Date(record.createdAt).getMonth()+1).padStart(2,'0')}-${record.id.toString().padStart(3, '0')}`,
+      baCode: `BA-${new Date(record.createdAt).getFullYear().toString().slice(2)}${String(new Date(record.createdAt).getMonth() + 1).padStart(2, '0')}-${record.id.toString().padStart(3, '0')}`,
       patientId: (record as any).patientId,
       patientName: (record as any).patient.fullName,
-      patientCode: (record as any).patient.patientCode || `BN${(record as any).patientId}`,
+      patientCode: (record as any).patient.patientProfile?.patientCode || `BN${(record as any).patientId}`,
+      patientCccd: (record as any).patient.patientProfile?.cccd || 'Chưa cập nhật',
       patientDob: (record as any).patient.dob || 'Chưa cập nhật',
       patientPhone: (record as any).patient.phone || 'Chưa cập nhật',
       patientAddress: (record as any).patient.address || 'Chưa cập nhật',
@@ -73,9 +75,14 @@ export async function getDoctorMedicalRecordById(recordId: number) {
       doctorSpecialty: (record as any).doctor.doctorProfile?.specialty || 'Đa khoa',
       reason: (record as any).appointment?.reason || 'Khám tổng quát',
       symptoms: record.symptoms || 'Không có ghi nhận',
+      clinicalExam: (record as any).clinicalExam || 'Không có ghi nhận',
       diagnosis: record.diagnosis || 'Đang chờ chẩn đoán',
+      secondaryDiagnosis: (record as any).secondaryDiagnosis || 'Không có',
       treatment: treatmentStr,
       notes: notesStr,
+      followUpDate: (record as any).followUpDate,
+      followUpTime: (record as any).followUpTime,
+      followUpReason: (record as any).followUpReason,
       vitals: {
         height: (record as any).patient.healthMetric?.height ? `${(record as any).patient.healthMetric.height} cm` : '--',
         weight: (record as any).patient.healthMetric?.weight ? `${(record as any).patient.healthMetric.weight} kg` : '--',
@@ -88,14 +95,18 @@ export async function getDoctorMedicalRecordById(recordId: number) {
       prescriptions: (record as any).patient.prescriptions,
       labTests: (record as any).patient.labTests,
       pastVisits: ((record as any).patient.examinationsAsPatient || [])
-        .filter((ex: any) => ex.id !== record.id) // Loại trừ lần khám hiện tại
         .map((ex: any) => ({
           id: ex.id,
           date: new Date(ex.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
           doctorName: ex.doctor?.fullName || 'Bác sĩ',
           diagnosis: ex.diagnosis || 'Chưa có',
           treatment: ex.treatment || 'Chưa có',
-          symptoms: ex.symptoms || 'Chưa rõ'
+          symptoms: ex.symptoms || 'Chưa rõ',
+          clinicalExam: (ex as any).clinicalExam || 'Chưa rõ',
+          notes: ex.notes || 'Không có ghi chú',
+          followUpDate: ex.followUpDate || null,
+          followUpTime: ex.followUpTime || null,
+          followUpReason: ex.followUpReason || null
         }))
     };
 

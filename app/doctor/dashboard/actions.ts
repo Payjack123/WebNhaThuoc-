@@ -25,7 +25,7 @@ export async function getDoctorDashboardData() {
     const [todayAppts, totalPatients, prescriptions, pendingLabs] = await Promise.all([
       prisma.appointment.findMany({
         where: { doctorId, bookingDate: todayStr },
-        include: { patient: { select: { id: true, fullName: true, patientCode: true } } },
+        include: { patient: { select: { id: true, fullName: true, patientProfile: true } } },
         orderBy: { bookingTime: 'asc' }
       }),
       prisma.appointment.groupBy({

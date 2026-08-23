@@ -12,18 +12,18 @@ export async function getPatientAppointmentData() {
     
     const userId = parseInt(userIdStr);
 
-    let user = await prisma.user.findUnique({ 
+    const user = await prisma.user.findUnique({ 
       where: { id: userId },
-      select: { id: true, fullName: true, patientCode: true } 
+      select: { id: true, fullName: true, phone: true, address: true, patientProfile: true } 
     });
 
-    if (user && (!user.patientCode || user.patientCode === 'BN-NEW')) {
+    if (user && (!user.patientProfile?.patientCode || user.patientProfile?.patientCode === 'BN-NEW')) {
       const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${user.id.toString().padStart(4, '0')}`;
-      await prisma.user.update({
-        where: { id: userId },
-        data: { patientCode: generatedCode }
+      await prisma.patientProfile.upsert({
+        where: { userId: userId },
+        update: { patientCode: generatedCode },
+        create: { userId: userId, patientCode: generatedCode }
       });
-      user.patientCode = generatedCode;
     }
 
     const [doctors, history] = await Promise.all([
@@ -172,16 +172,15 @@ export async function findPatientByQuery(query: string) {
         role: 'PATIENT',
         OR: [
           { phone: q },
-          { cccd: q },
-          { patientCode: q }
+          { patientProfile: { cccd: q } },
+          { patientProfile: { patientCode: q } }
         ]
       },
       select: {
         fullName: true,
         phone: true,
-        cccd: true,
         address: true,
-        patientCode: true
+        patientProfile: true
       }
     });
 

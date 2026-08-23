@@ -110,7 +110,8 @@ export default function PatientAppointmentsPage() {
           degree: doc.doctorProfile?.degree || 'Thạc sĩ Y Khoa',
           university: doc.doctorProfile?.university || 'Đại học Y Dược',
           languages: doc.doctorProfile?.languages || 'Tiếng Việt, Tiếng Anh',
-          certificates: 'Chứng chỉ Hành nghề, CME',
+          certificates: doc.doctorProfile?.certificateNumber || 'Chứng chỉ Hành nghề, CME',
+          bio: doc.doctorProfile?.bio || '',
           status: doc.doctorProfile?.status || 'Đang làm việc'
         }));
         setDoctorsList(formattedDoctors);
@@ -776,7 +777,7 @@ export default function PatientAppointmentsPage() {
               </div>
 
               <div className="mt-8 bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm text-gray-600 leading-relaxed">
-                Bác sĩ {selectedDoctorDetail.name} là một trong những chuyên gia hàng đầu trong lĩnh vực {selectedDoctorDetail.specialty}. Với nhiều năm kinh nghiệm công tác tại các bệnh viện lớn, bác sĩ luôn tận tâm và mang lại chất lượng khám chữa bệnh tốt nhất cho bệnh nhân.
+                {selectedDoctorDetail.bio || `Bác sĩ ${selectedDoctorDetail.name} là một trong những chuyên gia hàng đầu trong lĩnh vực ${selectedDoctorDetail.specialty}. Với nhiều năm kinh nghiệm công tác tại các bệnh viện lớn, bác sĩ luôn tận tâm và mang lại chất lượng khám chữa bệnh tốt nhất cho bệnh nhân.`}
               </div>
 
               <div className="mt-6 border-t border-gray-100 pt-6">

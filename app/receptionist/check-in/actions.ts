@@ -21,16 +21,16 @@ export async function searchAppointment(query: string, searchType: string) {
       if (searchType === 'Số điện thoại') {
         whereClause.patient = { phone: query };
       } else if (searchType === 'Mã bệnh nhân') {
-        whereClause.patient = { patientCode: query };
+        whereClause.patient = { patientProfile: { patientCode: query } };
       } else if (searchType === 'CCCD / CMND') {
-        whereClause.patient = { cccd: query };
+        whereClause.patient = { patientProfile: { cccd: query } };
       }
     }
 
     const appointments = await prisma.appointment.findMany({
       where: whereClause,
       include: {
-        patient: true,
+        patient: { include: { patientProfile: true } },
         doctor: true,
       }
     });
@@ -56,7 +56,7 @@ export async function searchAppointment(query: string, searchType: string) {
     const result = appointments.map(appointment => {
       let displayPatientName = appointment.patient.fullName;
       let displayPhone = appointment.patient.phone || 'Chưa cập nhật';
-      let displayCccd = appointment.patient.cccd || 'Chưa cập nhật';
+      let displayCccd = appointment.patient.patientProfile?.cccd || 'Chưa cập nhật';
       let isForRelative = false;
 
       // Extract real patient info if booked for someone else
@@ -78,12 +78,12 @@ export async function searchAppointment(query: string, searchType: string) {
       return {
         id: appointment.id,
         patientName: displayPatientName,
-        patientCode: isForRelative ? 'Chưa cập nhật' : (appointment.patient.patientCode || 'Chưa cập nhật'),
+        patientCode: isForRelative ? 'Chưa cập nhật' : (appointment.patient.patientProfile?.patientCode || 'Chưa cập nhật'),
         dob: isForRelative ? 'Chưa cập nhật' : (appointment.patient.dob || 'Chưa cập nhật'),
         gender: isForRelative ? 'Chưa cập nhật' : (appointment.patient.gender || 'Chưa cập nhật'),
         phone: displayPhone,
         cccd: displayCccd,
-        bhyt: isForRelative ? 'Chưa cập nhật' : (appointment.patient.bhyt || 'Chưa cập nhật'),
+        bhyt: isForRelative ? 'Chưa cập nhật' : (appointment.patient.patientProfile?.bhyt || 'Chưa cập nhật'),
         appointmentCode: appointment.appointmentCode || `LH${appointment.bookingDate.replace(/\//g, '').substring(0, 6)}-${String(appointment.id).padStart(5, '0')}`,
         bookingDate: appointment.bookingDate,
         bookingTime: appointment.bookingTime,

@@ -17,7 +17,7 @@ export async function getMedicalHistoryData() {
       select: {
         id: true,
         fullName: true,
-        patientCode: true
+        patientProfile: true
       }
     });
 

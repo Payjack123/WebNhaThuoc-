@@ -16,14 +16,14 @@ export async function getPatientDashboardData() {
     const userId = parseInt(userIdStr);
 
     // Truy vấn song song (Parallel Queries) để tối ưu tốc độ cho TiDB
-    let user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, patientCode: true } });
-    if (user && (!user.patientCode || user.patientCode === 'BN-NEW')) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, patientProfile: true } });
+    if (user && (!user.patientProfile?.patientCode || user.patientProfile?.patientCode === 'BN-NEW')) {
       const generatedCode = `BN${new Date().getFullYear().toString().slice(-2)}${user.id.toString().padStart(4, '0')}`;
-      await prisma.user.update({
-        where: { id: userId },
-        data: { patientCode: generatedCode }
+      await prisma.patientProfile.upsert({
+        where: { userId: userId },
+        update: { patientCode: generatedCode },
+        create: { userId: userId, patientCode: generatedCode }
       });
-      user.patientCode = generatedCode;
     }
 
     const [metric, appointments, prescriptions, labTests] = await Promise.all([

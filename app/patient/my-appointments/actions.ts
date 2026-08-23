@@ -15,7 +15,7 @@ export async function getMyAppointmentsData() {
 
     const user = await prisma.user.findUnique({ 
       where: { id: userId },
-      select: { id: true, fullName: true, patientCode: true } 
+      select: { id: true, fullName: true, patientProfile: true } 
     });
 
     if (!user) return { success: false, message: 'Không tìm thấy người dùng' };

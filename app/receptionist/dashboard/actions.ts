@@ -15,7 +15,7 @@ export async function getDashboardData() {
       },
       include: {
         patient: {
-          select: { fullName: true, patientCode: true, phone: true }
+          select: { fullName: true, patientProfile: true, phone: true }
         },
         doctor: {
           select: { fullName: true }
@@ -69,7 +69,7 @@ export async function getDashboardData() {
         if (app.status === 'ĐANG KHÁM') {
           roomData.currentlyExamining = {
             patientName: app.patient.fullName,
-            patientCode: app.patient.patientCode,
+            patientCode: app.patient.patientProfile?.patientCode,
             time: app.bookingTime
           };
         } else if (app.status === 'ĐÃ XÁC NHẬN') {

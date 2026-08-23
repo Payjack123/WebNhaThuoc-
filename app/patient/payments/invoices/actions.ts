@@ -19,6 +19,7 @@ export async function getPatientBillingData() {
     const patient = await prisma.user.findUnique({
       where: { id: patientId },
       include: {
+        patientProfile: true,
         appointmentsAsPatient: {
           include: {
             doctor: {
@@ -56,7 +57,7 @@ export async function getPatientBillingData() {
 
       const rawTotal = basePrice + labCost + medCost;
       // Nếu bệnh nhân có mã BHYT -> Giảm 20% chi phí khám
-      const insuranceDiscount = patient.bhyt ? Math.round(basePrice * 0.2) : 0;
+      const insuranceDiscount = patient.patientProfile?.bhyt ? Math.round(basePrice * 0.2) : 0;
       const finalAmount = rawTotal - insuranceDiscount;
 
       // Phân loại trạng thái thanh toán dựa trên trạng thái Lịch khám
@@ -126,7 +127,7 @@ export async function getPatientBillingData() {
       data: {
         patientInfo: {
           name: patient.fullName,
-          code: patient.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
+          code: patient.patientProfile?.patientCode || `BN${patient.id.toString().padStart(4, '0')}`,
           avatar: patient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.fullName)}&background=2563EB&color=fff`,
         },
         invoices,

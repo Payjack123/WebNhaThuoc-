@@ -22,7 +22,7 @@ export async function getAllDoctorAppointments() {
         doctorId: doctorId
       },
       include: {
-        patient: true 
+        patient: { include: { patientProfile: true } }
       }
       // Note: Removed string-based orderBy on bookingDate because it sorts '20/08' after '01/09' incorrectly. We will sort in JS instead.
     });
@@ -81,7 +81,7 @@ export async function getAllDoctorAppointments() {
       return {
         id: apt.id,
         patientName: apt.patient.fullName,
-        patientCode: apt.patient.patientCode || `BN-${apt.patient.id}`,
+        patientCode: apt.patient.patientProfile?.patientCode || `BN-${apt.patient.id}`,
         gender: apt.patient.gender || 'Nam',
         age: age,
         time: apt.bookingTime, 

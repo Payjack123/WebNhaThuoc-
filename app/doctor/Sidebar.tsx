@@ -4,76 +4,227 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Activity, LayoutDashboard, CalendarDays, Users, FileText, Pill,
-  TestTube, BarChart3, Bell, User, Settings, LogOut, ChevronUp, ChevronDown, Edit
+  Activity, LayoutDashboard, CalendarDays, Calendar, CalendarCheck, Users, 
+  FileText, Pill, TestTube, BarChart3, Bell, User, Settings, LogOut, 
+  ChevronUp, ChevronDown, Edit, ImageIcon, Stethoscope, ClipboardList,
+  Microscope, HeartPulse, ArrowLeftToLine
 } from 'lucide-react';
+
+type SubItem = {
+  name: string;
+  href: string;
+  id: string;
+  icon: any;
+};
+
+type NavItem = {
+  name: string;
+  href: string;
+  icon: any;
+  id: string;
+  badge?: number;
+  isExpandable?: boolean;
+  subItems?: SubItem[];
+};
+
+type NavGroup = {
+  group: string;
+  items: NavItem[];
+};
 
 export default function DoctorSidebar({ activePage }: { activePage: string }) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState<string>(
-    activePage.startsWith('prescriptions') ? 'prescriptions' : 
-    activePage.startsWith('records') ? 'records' : ''
+    activePage.startsWith('prescriptions') ? 'prescriptions' : ''
   );
 
   const handleLogout = () => router.push('/login');
 
-  const getLinkClass = (pageName: string) => {
-    return activePage === pageName
-      ? "flex items-center gap-3 px-4 py-3 bg-[#2563EB] text-white rounded-xl font-medium shadow-md transition-all duration-200"
-      : "flex items-center gap-3 px-4 py-3 hover:bg-blue-900/50 hover:text-white text-gray-300 rounded-xl transition-all duration-200";
-  };
-
-  const getSubLinkClass = (pageName: string) => {
-    return activePage === pageName
-      ? "text-sm px-3 py-2 text-[#2563EB] bg-white rounded-lg font-bold shadow-sm flex items-center gap-2"
-      : "text-sm px-3 py-2 text-gray-400 hover:text-white rounded-lg transition-all duration-200 flex items-center gap-2";
-  };
+  const navigation: NavGroup[] = [
+    {
+      group: 'TỔNG QUAN',
+      items: [
+        { name: 'Trang chủ', href: '/doctor/dashboard', icon: LayoutDashboard, id: 'dashboard' },
+        { name: 'Danh sách bệnh nhân', href: '/doctor/patients', icon: Users, id: 'patients' },
+      ]
+    },
+    {
+      group: 'KHÁM CHỮA BỆNH',
+      items: [
+        { name: 'Lịch khám', href: '/doctor/appointments', icon: Calendar, id: 'appointments' },
+        { name: 'Lịch hẹn của tôi', href: '/doctor/my-appointments', icon: CalendarDays, id: 'my-appointments' },
+        { name: 'Lịch hẹn hôm nay', href: '/doctor/today-appointments', icon: CalendarCheck, id: 'today-appointments', badge: 12 },
+      ]
+    },
+    {
+      group: 'HỒ SƠ SỨC KHỎE',
+      items: [
+        { name: 'Hồ sơ bệnh án', href: '/doctor/records/detail', icon: FileText, id: 'records' },
+      ]
+    },
+    {
+      group: 'XÉT NGHIỆM',
+      items: [
+        { name: 'Chỉ định xét nghiệm', href: '#', icon: TestTube, id: 'test-assign' },
+        { name: 'Kết quả xét nghiệm', href: '#', icon: Microscope, id: 'test-result' },
+      ]
+    },
+    {
+      group: 'QUẢN LÝ ĐIỀU TRỊ',
+      items: [
+        { 
+          name: 'Đơn thuốc', 
+          href: '/doctor/prescriptions', 
+          icon: Pill, 
+          id: 'prescriptions',
+          isExpandable: true,
+          subItems: [
+            { name: 'Tạo đơn thuốc', href: '/doctor/prescriptions/create', id: 'prescriptions-create', icon: Edit },
+            { name: 'Danh sách đơn thuốc', href: '/doctor/prescriptions', id: 'prescriptions-list', icon: LayoutDashboard }
+          ]
+        },
+        { name: 'Chẩn đoán hình ảnh', href: '#', icon: ImageIcon, id: 'imaging' },
+        { name: 'Thủ thuật', href: '#', icon: Stethoscope, id: 'procedures' },
+      ]
+    },
+    {
+      group: 'BÁO CÁO',
+      items: [
+        { name: 'Báo cáo chuyên môn', href: '/doctor/reports', icon: ClipboardList, id: 'reports' },
+        { name: 'Thống kê', href: '#', icon: BarChart3, id: 'statistics' },
+      ]
+    },
+    {
+      group: 'HỆ THỐNG',
+      items: [
+        { name: 'Thông báo', href: '#', icon: Bell, id: 'notifications', badge: 3 },
+        { name: 'Hồ sơ bác sĩ', href: '/doctor/profile', icon: User, id: 'profile' },
+        { name: 'Cài đặt', href: '/doctor/settings', icon: Settings, id: 'settings' },
+      ]
+    }
+  ];
 
   return (
-    <aside className="w-64 bg-[#172554] text-gray-300 flex flex-col h-screen sticky top-0 shrink-0 z-20">
-      <div className="h-20 flex items-center justify-center border-b border-blue-900/50">
-        <div className="flex items-center gap-2 text-white">
-          <Activity className="text-orange-500" size={28} />
-          <span className="font-bold text-xl tracking-tight">HEALTHCARE</span>
+    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 z-20 font-sans">
+      {/* Logo Area */}
+      <div className="h-20 flex items-center px-6 border-b border-gray-100 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <HeartPulse size={24} strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-lg text-blue-900 leading-tight">MediCare</span>
+            <span className="text-[10px] text-gray-500 font-medium">Hệ thống quản lý phòng khám</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3 custom-scrollbar">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Menu chính</p>
-        <Link href="/doctor/dashboard" className={getLinkClass('dashboard')}><LayoutDashboard size={20} /> Dashboard</Link>
-        <Link href="/doctor/appointments" className={getLinkClass('appointments')}><CalendarDays size={20} /> Lịch khám</Link>
-        <Link href="/doctor/my-appointments" className={getLinkClass('my-appointments')}><CalendarDays size={20} /> Lịch hẹn của tôi</Link>
-        <Link href="/doctor/today-appointments" className={getLinkClass('today-appointments')}><CalendarDays size={20} /> Lịch hẹn hôm nay</Link>
-        <Link href="/doctor/patients" className={getLinkClass('patients')}><Users size={20} /> Bệnh nhân</Link>
-        <Link href="/doctor/records/detail" className={getLinkClass('records')}><FileText size={20} /> Bệnh án</Link>
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-6 custom-scrollbar px-3">
+        {navigation.map((group, idx) => (
+          <div key={idx} className="flex flex-col gap-1">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-3">
+              {group.group}
+            </p>
+            
+            <div className="flex flex-col space-y-1">
+              {group.items.map((item) => {
+                const isActive = activePage === item.id || activePage.startsWith(item.id + '-');
+                
+                if (item.isExpandable) {
+                  const isExpanded = isMenuOpen === item.id;
+                  return (
+                    <div key={item.id} className="flex flex-col gap-1">
+                      <button
+                        onClick={() => setIsMenuOpen(isExpanded ? '' : item.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-medium transition-all duration-200 text-sm ${
+                          isActive 
+                            ? 'bg-blue-50 text-blue-600' 
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon size={18} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
+                          {item.name}
+                        </div>
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
 
-        <div className="flex flex-col gap-1">
-          <button
-            onClick={() => setIsMenuOpen(isMenuOpen === 'prescriptions' ? '' : 'prescriptions')}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200 ${activePage.startsWith('prescriptions') ? 'bg-[#2563EB]/20 text-white' : 'hover:bg-blue-900/50 hover:text-white text-gray-300'}`}
-          >
-            <div className="flex items-center gap-3"><Pill size={20} /> Đơn thuốc</div>
-            {isMenuOpen === 'prescriptions' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
+                      {isExpanded && item.subItems && (
+                        <div className="ml-9 flex flex-col gap-1 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                          {item.subItems.map((subItem) => {
+                            const isSubActive = activePage === subItem.id;
+                            return (
+                              <Link 
+                                key={subItem.id}
+                                href={subItem.href} 
+                                className={`text-sm px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                                  isSubActive
+                                    ? 'text-blue-600 font-semibold'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                                }`}
+                              >
+                                {isSubActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                                <span className={isSubActive ? '' : 'ml-3'}>{subItem.name}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-          {isMenuOpen === 'prescriptions' && (
-            <div className="ml-8 flex flex-col gap-1 border-l-2 border-blue-900/50 pl-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-              <Link href="/doctor/prescriptions/create" className={getSubLinkClass('prescriptions-create')}><Edit size={16} /> Tạo đơn thuốc</Link>
-              <Link href="/doctor/prescriptions" className={getSubLinkClass('prescriptions-list')}><LayoutDashboard size={16} /> Danh sách đơn thuốc</Link>
+                return (
+                  <Link 
+                    key={item.id} 
+                    href={item.href} 
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg font-medium transition-all duration-200 text-sm relative overflow-hidden group ${
+                      isActive 
+                        ? 'bg-blue-50/80 text-blue-700' 
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    {isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-md" />
+                    )}
+                    <div className="flex items-center gap-3 relative z-10">
+                      <item.icon size={18} className={isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} /> 
+                      {item.name}
+                    </div>
+                    
+                    {item.badge && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isActive 
+                          ? 'bg-blue-200/50 text-blue-700' 
+                          : 'bg-red-50 text-red-500'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-          )}
-        </div>
-
-
-        <Link href="/doctor/reports" className={getLinkClass('reports')}><BarChart3 size={20} /> Báo cáo</Link>
+          </div>
+        ))}
       </div>
 
-      <div className="p-4 border-t border-blue-900/50 space-y-1">
-        <Link href="#" className="flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition-all duration-200 text-sm"><Bell size={18} /> Thông báo</Link>
-        <Link href="/doctor/profile" className={activePage === 'profile' ? "flex items-center gap-3 px-4 py-2 bg-blue-900/50 text-white rounded-lg transition-all duration-200 text-sm" : "flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition-all duration-200 text-sm"}><User size={18} /> Hồ sơ bác sĩ</Link>
-        <Link href="/doctor/settings" className={activePage === 'settings' ? "flex items-center gap-3 px-4 py-2 bg-blue-900/50 text-white rounded-lg transition-all duration-200 text-sm" : "flex items-center gap-3 px-4 py-2 hover:bg-blue-900/50 hover:text-white rounded-lg transition-all duration-200 text-sm"}><Settings size={18} /> Cài đặt</Link>
-        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-lg transition-all duration-200 text-sm mt-2"><LogOut size={18} /> Đăng xuất</button>
+      {/* Footer / Logout */}
+      <div className="p-4 border-t border-gray-100 flex flex-col gap-2 shrink-0">
+        <button 
+          onClick={handleLogout} 
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 text-sm font-medium"
+        >
+          <LogOut size={18} /> Đăng xuất
+        </button>
+        <button 
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 rounded-lg transition-all duration-200 text-sm font-medium mt-1"
+        >
+          <ArrowLeftToLine size={18} /> Thu gọn menu
+        </button>
       </div>
     </aside>
   );
 }
+

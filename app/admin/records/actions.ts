@@ -10,6 +10,7 @@ export async function getAdminMedicalRecordsData() {
         appointment: true,
         patient: {
           include: {
+            patientProfile: true,
             healthMetric: true,
             prescriptions: { include: { items: true }, orderBy: { createdAt: 'desc' }, take: 1 },
             labTests: { orderBy: { date: 'desc' } }
@@ -58,11 +59,11 @@ export async function getAdminMedicalRecordsData() {
         id: record.id,
         baCode: `BA-${new Date(record.createdAt).getFullYear().toString().slice(2)}${String(new Date(record.createdAt).getMonth()+1).padStart(2,'0')}-${record.id.toString().padStart(3, '0')}`,
         patient: record.patient.fullName,
-        patientId: record.patient.patientCode || `BN${record.patient.id.toString().padStart(4, '0')}`,
+        patientId: record.patient.patientProfile?.patientCode || `BN${record.patient.id.toString().padStart(4, '0')}`,
         age: age,
         gender: record.patient.gender || 'Nam',
-        bloodType: 'O+', // Có thể lấy từ HealthMetric nếu mở rộng DB
-        bhyt: record.patient.bhyt ? 'Có' : 'Không',
+        bloodType: 'O+',
+        bhyt: record.patient.patientProfile?.bhyt ? 'Có' : 'Không',
         doctor: `BS. ${record.doctor.fullName}`,
         specialty: record.doctor.doctorProfile?.specialty || record.appointment.specialty || 'Nội tổng quát',
         date: dateStr,

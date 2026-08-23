@@ -30,7 +30,7 @@ export async function getDoctorAppointmentsData(selectedDate?: string) {
         bookingDate: dateStr
       },
       include: {
-        patient: true 
+        patient: { include: { patientProfile: true } }
       },
       orderBy: {
         bookingTime: 'asc' // Sắp xếp giờ từ sáng đến chiều
@@ -77,7 +77,7 @@ export async function getDoctorAppointmentsData(selectedDate?: string) {
       return {
         id: apt.id,
         patientName: apt.patient.fullName,
-        patientCode: apt.patient.patientCode || `BN-${apt.patient.id}`,
+        patientCode: apt.patient.patientProfile?.patientCode || `BN-${apt.patient.id}`,
         gender: apt.patient.gender || 'Nam',
         age: age,
         time: apt.bookingTime, 

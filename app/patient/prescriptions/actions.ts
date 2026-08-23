@@ -13,6 +13,7 @@ export async function getPatientPrescriptionsData() {
     const patient = await prisma.user.findUnique({
       where: { id: patientId },
       include: {
+        patientProfile: true,
         prescriptions: {
           include: { 
             items: true,
@@ -45,7 +46,7 @@ export async function getPatientPrescriptionsData() {
         id: p.id,
         code: p.code,
         patientName: patient.fullName,
-        patientCode: patient.patientCode || `BN${patient.id}`,
+        patientCode: patient.patientProfile?.patientCode || `BN${patient.id}`,
         doctor: doctorName,
         doctorSpecialty: doctorSpecialty,
         date: createdDateStr,
@@ -80,7 +81,7 @@ export async function getPatientPrescriptionsData() {
       data: {
         patientInfo: {
           name: patient.fullName,
-          code: patient.patientCode || `BN${patient.id}`,
+          code: patient.patientProfile?.patientCode || `BN${patient.id}`,
           avatar: patient.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(patient.fullName)}&background=2563EB&color=fff`
         },
         prescriptions: formattedPrescriptions,

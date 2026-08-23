@@ -8,7 +8,7 @@ export async function getAdminPrescriptionsData() {
     // Kéo toàn bộ đơn thuốc kèm theo chi tiết thuốc, bệnh nhân và thông tin bác sĩ
     const prescriptions = await prisma.prescription.findMany({
       include: {
-        patient: true,
+        patient: { include: { patientProfile: true } },
         items: true,
         doctor: { include: { doctorProfile: true } }
       },
@@ -71,7 +71,7 @@ export async function getAdminPrescriptionsData() {
         code: p.code,
         patient: p.patient.fullName,
         patientAvatar: patientAvatar,
-        patientId: p.patient.patientCode || `BN${p.patient.id.toString().padStart(4, '0')}`,
+        patientId: p.patient.patientProfile?.patientCode || `BN${p.patient.id.toString().padStart(4, '0')}`,
         age: age,
         gender: p.patient.gender || 'Nam',
         doctor: doctorName,

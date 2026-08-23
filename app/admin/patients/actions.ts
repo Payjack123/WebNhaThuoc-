@@ -9,9 +9,10 @@ export async function getAdminPatientsData() {
     const patients = await prisma.user.findMany({
       where: { role: 'PATIENT' },
       include: {
+        patientProfile: true,
         appointmentsAsPatient: {
           orderBy: { createdAt: 'desc' },
-          take: 1 // Lấy lịch khám gần nhất
+          take: 1
         },
         examinationsAsPatient: true
       },
@@ -46,15 +47,15 @@ export async function getAdminPatientsData() {
 
       return {
         id: p.id,
-        patientCode: p.patientCode || `BN${p.id.toString().padStart(4, '0')}`,
+        patientCode: p.patientProfile?.patientCode || `BN${p.id.toString().padStart(4, '0')}`,
         name: p.fullName,
         gender: p.gender || 'Nam',
         age: age || 'N/A',
         phone: p.phone || 'Chưa cập nhật',
         email: p.email || 'Chưa cập nhật',
         address: p.address || 'Chưa cập nhật',
-        cccd: p.cccd || 'Chưa cập nhật',
-        bhyt: p.bhyt || 'Chưa cập nhật',
+        cccd: p.patientProfile?.cccd || 'Chưa cập nhật',
+        bhyt: p.patientProfile?.bhyt || 'Chưa cập nhật',
         lastVisit: lastVisit,
         status: p.status || 'Hoạt động',
         avatar: p.avatar || `https://ui-avatars.com/api/?name=${p.fullName.replace(/ /g, '+')}&background=random`
@@ -90,23 +91,25 @@ export async function addPatient(data: any) {
     const newPatient = await prisma.user.create({
       data: {
         fullName: data.name,
-        email: data.email || `${data.phone}@clinic.local`, // Đảm bảo email unique
+        email: data.email || `${data.phone}@clinic.local`,
         phone: data.phone,
         dob: data.dob,
         gender: data.gender,
         address: data.address,
-        cccd: data.cccd,
-        bhyt: data.bhyt,
         status: data.status,
         passwordHash: hashedPassword,
         role: 'PATIENT',
       }
     });
 
-    // Cập nhật lại PatientCode dựa trên ID vừa sinh ra
-    await prisma.user.update({
-      where: { id: newPatient.id },
-      data: { patientCode: `BN${newPatient.id.toString().padStart(4, '0')}` }
+    // Tạo PatientProfile với patientCode, cccd, bhyt
+    await prisma.patientProfile.create({
+      data: {
+        userId: newPatient.id,
+        patientCode: `BN${newPatient.id.toString().padStart(4, '0')}`,
+        cccd: data.cccd || null,
+        bhyt: data.bhyt || null,
+      }
     });
 
     return { success: true, message: 'Thêm bệnh nhân thành công! Mật khẩu mặc định: 123456' };

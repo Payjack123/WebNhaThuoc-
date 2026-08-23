@@ -80,7 +80,7 @@ export async function getDoctorPrescriptionsData() {
     const patients = await prisma.user.findMany({
       where: { id: { in: patientIds } },
       select: { 
-        id: true, fullName: true, patientCode: true, dob: true, gender: true, bhyt: true,
+        id: true, fullName: true, patientProfile: true, dob: true, gender: true,
         phone: true, address: true,
         healthMetric: { select: { allergies: true } },
         examinationsAsPatient: {
@@ -101,7 +101,7 @@ export async function getDoctorPrescriptionsData() {
     const prescriptions = await prisma.prescription.findMany({
       where: { patientId: { in: patientIds } },
       include: {
-        patient: true,
+        patient: { include: { patientProfile: true } },
         items: true
       },
       orderBy: { createdAt: 'desc' }
@@ -141,7 +141,7 @@ export async function getDoctorPrescriptionsData() {
         code: p.code,
         patientId: p.patient.id,
         patientName: p.patient.fullName,
-        patientCode: p.patient.patientCode || `BN${p.patient.id}`,
+        patientCode: p.patient.patientProfile?.patientCode || `BN${p.patient.id}`,
         age: age,
         gender: p.patient.gender || 'Nam',
         date: createdDateStr,
