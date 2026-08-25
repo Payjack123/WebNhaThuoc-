@@ -1,34 +1,26 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CalendarDays, CalendarCheck, FileText, Pill, HeartPulse,
-  Settings, LogOut, Activity, Wallet, ChevronDown, ChevronUp, History
+  Settings, LogOut, Activity, Wallet, History
 } from 'lucide-react';
 
 export default function PatientSidebar({ activePage }: { activePage: string }) {
   const router = useRouter();
-  
-  // Mặc định mở menu con nếu đang ở trong các trang thanh toán
-  const isFinanceActive = activePage === 'billing' || activePage === 'invoices' || activePage === 'history' || activePage === 'insurance';
-  const [isFinanceOpen, setIsFinanceOpen] = useState(isFinanceActive);
+
 
   const handleLogout = () => {
     router.push('/login');
   };
 
   const getMenuItemClass = (pageName: string) => {
-    return activePage === pageName 
+    return activePage === pageName
       ? "flex items-center gap-3 px-4 py-3 bg-[#2563EB] text-white rounded-2xl font-bold shadow-md shadow-blue-200 transition-all text-sm"
       : "flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-2xl transition-all text-sm font-semibold";
   };
-  
-  const getSubMenuItemClass = (pageName: string) => {
-    return activePage === pageName
-      ? "flex items-center gap-2 px-4 py-2 text-[#2563EB] bg-blue-50 rounded-xl transition-all text-sm font-bold ml-9"
-      : "flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] rounded-xl transition-all text-sm font-medium ml-9";
-  };
+
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 shadow-sm z-20">
@@ -40,11 +32,12 @@ export default function PatientSidebar({ activePage }: { activePage: string }) {
       </div>
 
       <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-4 custom-scrollbar">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Menu chính</p>
-
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">Tổng quan</p>
         <Link href="/patient/dashboard" className={getMenuItemClass('dashboard')}>
-          <LayoutDashboard size={18} /> Tổng quan
+          <LayoutDashboard size={18} /> Dashboard
         </Link>
+
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Lịch hẹn</p>
         <Link href="/patient/appointments" className={getMenuItemClass('appointments')}>
           <CalendarDays size={18} /> Đặt lịch khám
         </Link>
@@ -54,50 +47,37 @@ export default function PatientSidebar({ activePage }: { activePage: string }) {
         <Link href="/patient/medical-history" className={getMenuItemClass('medical-history')}>
           <History size={18} /> Lịch sử khám
         </Link>
+
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Hồ sơ bệnh án</p>
         <Link href="/patient/records" className={getMenuItemClass('records')}>
           <HeartPulse size={18} /> Hồ sơ sức khỏe
         </Link>
         <Link href="/patient/medical-record" className={getMenuItemClass('medical-record')}>
           <FileText size={18} /> Hồ sơ bệnh án
         </Link>
+
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Xét nghiệm</p>
         <Link href="/patient/test-results" className={getMenuItemClass('test-results')}>
           <Activity size={18} /> Kết quả xét nghiệm
         </Link>
+
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Đơn thuốc</p>
         <Link href="/patient/prescriptions" className={getMenuItemClass('prescriptions')}>
           <Pill size={18} /> Đơn thuốc của tôi
         </Link>
 
-        {/* Menu Tài chính / Thanh toán (Collapsible) */}
-        <div className="flex flex-col gap-1">
-          <button 
-            onClick={() => setIsFinanceOpen(!isFinanceOpen)}
-            className={`flex items-center justify-between px-4 py-3 rounded-2xl transition-all text-sm w-full ${
-              isFinanceActive && !isFinanceOpen ? 'text-[#2563EB] font-bold bg-blue-50' : 'text-gray-600 hover:bg-gray-50 hover:text-[#2563EB] font-semibold'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Wallet size={18} /> Tài chính
-            </div>
-            {isFinanceOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          
-          {/* Submenu */}
-          {isFinanceOpen && (
-            <div className="flex flex-col gap-1 mt-1">
-              <Link href="/patient/payments/invoices" className={getSubMenuItemClass('invoices')}>
-                Thanh toán viện phí
-              </Link>
-              <Link href="/patient/payments/history" className={getSubMenuItemClass('history')}>
-                Danh sách hóa đơn
-              </Link>
-              <Link href="/patient/payments/insurance" className={getSubMenuItemClass('insurance')}>
-                Bảo hiểm y tế
-              </Link>
-            </div>
-          )}
-        </div>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Thu phí</p>
+        <Link href="/patient/payments/invoices" className={getMenuItemClass('invoices')}>
+          <Wallet size={18} /> Thanh toán viện phí
+        </Link>
+        <Link href="/patient/payments/history" className={getMenuItemClass('history')}>
+          <FileText size={18} /> Danh sách hóa đơn
+        </Link>
+        <Link href="/patient/payments/insurance" className={getMenuItemClass('insurance')}>
+          <HeartPulse size={18} /> Bảo hiểm y tế
+        </Link>
 
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-2">Tài khoản</p>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Tài khoản</p>
         <Link href="/patient/settings" className={getMenuItemClass('settings')}>
           <Settings size={18} /> Cài đặt cá nhân
         </Link>
