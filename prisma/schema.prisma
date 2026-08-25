@@ -9,6 +9,7 @@ datasource db {
 }
 
 model User {
+<<<<<<< HEAD
   id                    Int              @id @default(autoincrement())
   fullName              String           @map("full_name") @db.VarChar(100)
   email                 String           @unique @db.VarChar(100)
@@ -32,10 +33,39 @@ model User {
   labTests              LabTest[]
   prescriptionsAsDoctor Prescription[]   @relation("DoctorPrescriptions")
   prescriptions         Prescription[]   @relation("PatientPrescriptions")
+=======
+  id                    Int            @id @default(autoincrement())
+  fullName              String         @map("full_name") @db.VarChar(100)
+  email                 String         @unique @db.VarChar(100)
+  passwordHash          String         @map("password_hash") @db.VarChar(255)
+  role                  Role           @default(PATIENT)
+  patientCode           String?        @default("BN-NEW")
+  phone                 String?        @db.VarChar(20)
+  dob                   String?        @db.VarChar(20)
+  gender                String?        @default("Nam")
+  address               String?        @db.VarChar(255)
+  avatar                String?        @db.Text
+  cccd                  String?        @db.VarChar(20)
+  bhyt                  String?        @db.VarChar(30)
+  status                String         @default("Hoạt động")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+  insurance             String?        @db.VarChar(100)
+  appointmentsAsDoctor  Appointment[]  @relation("DoctorAppointments")
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  doctorProfile         DoctorProfile?
+  examinationsAsDoctor  Examination[]  @relation("DoctorExaminations")
+  examinationsAsPatient Examination[]  @relation("PatientExaminations")
+  healthMetric          HealthMetric?
+  labTests              LabTest[]
+  prescriptionsAsDoctor Prescription[] @relation("DoctorPrescriptions")
+  prescriptions         Prescription[] @relation("PatientPrescriptions")
+>>>>>>> e364dbd54b18981061639aa4f9f753f821b8b7fe
 
   @@map("users")
 }
 
+<<<<<<< HEAD
 model PatientProfile {
   id          Int     @id @default(autoincrement())
   userId      Int     @unique
@@ -46,6 +76,8 @@ model PatientProfile {
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+=======
+>>>>>>> e364dbd54b18981061639aa4f9f753f821b8b7fe
 model DoctorProfile {
   id           Int     @id @default(autoincrement())
   userId       Int     @unique
@@ -57,6 +89,7 @@ model DoctorProfile {
   imagePrefix  String  @default("D")
   degree       String? @default("Thạc sĩ Y Khoa")
   university   String? @default("Đại học Y Hà Nội")
+<<<<<<< HEAD
   languages         String? @default("Việt, Anh")
   certificates      Json?
   bio               String? @db.Text
@@ -64,6 +97,12 @@ model DoctorProfile {
   doctorCode        String? @db.VarChar(20)
   schedule          Json?
   user              User    @relation(fields: [userId], references: [id])
+=======
+  languages    String? @default("Việt, Anh")
+  certificates Json?
+  schedule     Json?
+  user         User    @relation(fields: [userId], references: [id])
+>>>>>>> e364dbd54b18981061639aa4f9f753f821b8b7fe
 }
 
 model HealthMetric {
