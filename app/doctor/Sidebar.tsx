@@ -7,7 +7,7 @@ import {
   Activity, LayoutDashboard, CalendarDays, Calendar, CalendarCheck, Users, 
   FileText, Pill, TestTube, BarChart3, Bell, User, Settings, LogOut, 
   ChevronUp, ChevronDown, Edit, ImageIcon, Stethoscope, ClipboardList,
-  Microscope, HeartPulse, ArrowLeftToLine
+  Microscope, HeartPulse, ArrowLeftToLine, Shield
 } from 'lucide-react';
 
 type SubItem = {
@@ -44,29 +44,29 @@ export default function DoctorSidebar({ activePage }: { activePage: string }) {
     {
       group: 'TỔNG QUAN',
       items: [
-        { name: 'Trang chủ', href: '/doctor/dashboard', icon: LayoutDashboard, id: 'dashboard' },
-        { name: 'Danh sách bệnh nhân', href: '/doctor/patients', icon: Users, id: 'patients' },
+        { name: 'Dashboard', href: '/doctor/dashboard', icon: LayoutDashboard, id: 'dashboard' },
+      ]
+    },
+    {
+      group: 'LỊCH LÀM VIỆC',
+      items: [
+        { name: 'Lịch hẹn', href: '/doctor/appointments', icon: Calendar, id: 'appointments' },
+        { name: 'Lịch hẹn của tôi', href: '/doctor/my-appointments', icon: CalendarDays, id: 'my-appointments' },
+        { name: 'Lịch hẹn hôm nay', href: '/doctor/today-appointments', icon: CalendarCheck, id: 'today-appointments' },
       ]
     },
     {
       group: 'KHÁM CHỮA BỆNH',
       items: [
-        { name: 'Lịch khám', href: '/doctor/appointments', icon: Calendar, id: 'appointments' },
-        { name: 'Lịch hẹn của tôi', href: '/doctor/my-appointments', icon: CalendarDays, id: 'my-appointments' },
-        { name: 'Lịch hẹn hôm nay', href: '/doctor/today-appointments', icon: CalendarCheck, id: 'today-appointments', badge: 12 },
-      ]
-    },
-    {
-      group: 'HỒ SƠ SỨC KHỎE',
-      items: [
-        { name: 'Hồ sơ bệnh án', href: '/doctor/records/detail', icon: FileText, id: 'records' },
+        { name: 'Danh sách bệnh nhân', href: '/doctor/patients', icon: Users, id: 'patients' },
+        { name: 'Bệnh án', href: '/doctor/records/detail', icon: FileText, id: 'records' },
       ]
     },
     {
       group: 'XÉT NGHIỆM',
       items: [
-        { name: 'Chỉ định xét nghiệm', href: '#', icon: TestTube, id: 'test-assign' },
-        { name: 'Kết quả xét nghiệm', href: '#', icon: Microscope, id: 'test-result' },
+        { name: 'Chỉ định xét nghiệm', href: '/doctor/test-orders', icon: TestTube, id: 'test-assign' },
+        { name: 'Kết quả xét nghiệm', href: '/doctor/test-results', icon: Microscope, id: 'test-result' },
       ]
     },
     {
@@ -83,38 +83,30 @@ export default function DoctorSidebar({ activePage }: { activePage: string }) {
             { name: 'Danh sách đơn thuốc', href: '/doctor/prescriptions', id: 'prescriptions-list', icon: LayoutDashboard }
           ]
         },
-        { name: 'Chẩn đoán hình ảnh', href: '#', icon: ImageIcon, id: 'imaging' },
-        { name: 'Thủ thuật', href: '#', icon: Stethoscope, id: 'procedures' },
-      ]
-    },
-    {
-      group: 'BÁO CÁO',
-      items: [
-        { name: 'Báo cáo chuyên môn', href: '/doctor/reports', icon: ClipboardList, id: 'reports' },
-        { name: 'Thống kê', href: '#', icon: BarChart3, id: 'statistics' },
       ]
     },
     {
       group: 'HỆ THỐNG',
       items: [
-        { name: 'Thông báo', href: '#', icon: Bell, id: 'notifications', badge: 3 },
-        { name: 'Hồ sơ bác sĩ', href: '/doctor/profile', icon: User, id: 'profile' },
-        { name: 'Cài đặt', href: '/doctor/settings', icon: Settings, id: 'settings' },
+        { name: 'Thông báo', href: '/doctor/settings/notifications', icon: Bell, id: 'notifications' },
+        { name: 'Hồ sơ cá nhân', href: '/doctor/settings/profile', icon: User, id: 'profile' },
+        { name: 'Lịch làm việc', href: '/doctor/settings/schedule', icon: Calendar, id: 'schedule' },
+        { name: 'Bảo mật', href: '/doctor/settings/security', icon: Shield, id: 'security' },
       ]
     }
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 z-20 font-sans">
+    <aside className="w-[280px] bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0 shrink-0 z-20 font-sans">
       {/* Logo Area */}
-      <div className="h-20 flex items-center px-6 border-b border-gray-100 shrink-0">
+      <div className="h-20 flex items-center px-6 shrink-0 mt-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <HeartPulse size={24} strokeWidth={2.5} />
+          <div className="w-11 h-11 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <HeartPulse size={26} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-blue-900 leading-tight">MediCare</span>
-            <span className="text-[10px] text-gray-500 font-medium">Hệ thống quản lý phòng khám</span>
+            <span className="font-extrabold text-xl text-blue-700 tracking-tight">MediCare</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Hệ thống phòng khám</span>
           </div>
         </div>
       </div>
@@ -211,17 +203,15 @@ export default function DoctorSidebar({ activePage }: { activePage: string }) {
       </div>
 
       {/* Footer / Logout */}
-      <div className="p-4 border-t border-gray-100 flex flex-col gap-2 shrink-0">
+      <div className="p-4 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
+        <div className="w-11 h-11 rounded-full bg-[#2a2a2a] text-white flex items-center justify-center font-bold text-lg shrink-0">
+          N
+        </div>
         <button 
           onClick={handleLogout} 
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 text-sm font-medium"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-red-50/80 text-red-600 hover:bg-red-100 rounded-xl transition-all duration-200 text-sm font-bold"
         >
           <LogOut size={18} /> Đăng xuất
-        </button>
-        <button 
-          className="w-full flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:bg-gray-50 hover:text-gray-600 rounded-lg transition-all duration-200 text-sm font-medium mt-1"
-        >
-          <ArrowLeftToLine size={18} /> Thu gọn menu
         </button>
       </div>
     </aside>
