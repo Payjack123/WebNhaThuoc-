@@ -47,14 +47,10 @@ export async function getDoctorAppointmentsData(selectedDate?: string) {
       else if (apt.status === 'ĐÃ HỦY') canceled++;
       else waiting++; 
 
-      let age = 'N/A';
-      if (apt.patient.dob) {
-         const year = apt.patient.dob.split('/')[2];
-         if (year) age = (new Date().getFullYear() - parseInt(year)).toString();
-      }
+      let dob = apt.patient.dob || 'N/A';
 
       let parsedNote = apt.reason || '';
-      let patientDetails = null;
+      let patientDetails: any = null;
 
       if (parsedNote.startsWith('Người khám: ')) {
         const parts = parsedNote.split('. Lý do: ');
@@ -76,15 +72,16 @@ export async function getDoctorAppointmentsData(selectedDate?: string) {
 
       return {
         id: apt.id,
-        patientName: apt.patient.fullName,
+        patientName: patientDetails?.name || apt.patient.fullName,
         patientCode: apt.patient.patientProfile?.patientCode || `BN-${apt.patient.id}`,
         gender: apt.patient.gender || 'Nam',
-        age: age,
+        dob: dob,
         time: apt.bookingTime, 
         status: uiStatus,
         rawStatus: apt.status,
         reason: parsedNote || 'Khám bệnh',
         patientDetails,
+        patientPhone: patientDetails?.phone || apt.patient.phone,
         room: doctor.doctorProfile?.specialty || 'Phòng khám',
         avatar: apt.patient.avatar || `https://ui-avatars.com/api/?name=${apt.patient.fullName.replace(/ /g, '+')}&background=random`
       };

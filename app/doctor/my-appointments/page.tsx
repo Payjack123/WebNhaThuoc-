@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   CalendarDays, ChevronLeft, ChevronRight, RefreshCw, 
-  Search, Eye, Edit2, MoreVertical, CheckCircle2, Clock, XCircle, Calendar
+  Search, Eye, Edit2, MoreVertical, CheckCircle2, Clock, XCircle, Calendar, Trash2
 } from 'lucide-react';
 import { getAllDoctorAppointments } from '@/app/doctor/my-appointments/actions';
 import DoctorSidebar from '@/app/doctor/Sidebar';
@@ -14,7 +14,12 @@ export default function MyAppointmentsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('ALL'); // ALL, UPCOMING, COMPLETED, CANCELED
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [specialtyFilter, setSpecialtyFilter] = useState('ALL');
+  const [patientFilter, setPatientFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,12 +50,48 @@ export default function MyAppointmentsPage() {
   };
 
   const filteredAppointments = data?.appointments?.filter((apt: any) => {
-    if (activeTab === 'ALL') return true;
-    if (activeTab === 'UPCOMING') return apt.status === 'Sắp tới';
-    if (activeTab === 'COMPLETED') return apt.status === 'Đã hoàn thành';
-    if (activeTab === 'CANCELED') return apt.status === 'Đã hủy';
-    return true;
+    let match = true;
+    
+    // Lọc theo trạng thái
+    if (statusFilter !== 'ALL' && apt.status !== statusFilter) match = false;
+    
+    // Lọc theo chuyên khoa
+    if (specialtyFilter !== 'ALL' && apt.room !== specialtyFilter) match = false;
+    
+    // Lọc theo bệnh nhân
+    if (patientFilter !== 'ALL' && apt.patientName !== patientFilter) match = false;
+    
+    // Lọc theo từ khoá tìm kiếm
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!apt.patientName?.toLowerCase().includes(q) &&
+          !apt.patientPhone?.includes(q) &&
+          !apt.reason?.toLowerCase().includes(q)) {
+        match = false;
+      }
+    }
+    
+    // Lọc theo ngày
+    if (fromDate || toDate) {
+      const aptDateParts = (apt.date || apt.bookingDate).split('/'); // DD/MM/YYYY
+      if (aptDateParts.length === 3) {
+         const aptDate = new Date(`${aptDateParts[2]}-${aptDateParts[1]}-${aptDateParts[0]}`);
+         if (fromDate) {
+           const fd = new Date(fromDate);
+           if (aptDate < fd) match = false;
+         }
+         if (toDate) {
+           const td = new Date(toDate);
+           if (aptDate > td) match = false;
+         }
+      }
+    }
+
+    return match;
   }) || [];
+  
+  const uniquePatients = Array.from(new Set(data?.appointments?.map((a: any) => a.patientName))) as string[];
+  const uniqueSpecialties = Array.from(new Set(data?.appointments?.map((a: any) => a.room))) as string[];
 
   return (
     <div className="min-h-screen flex bg-white font-sans text-gray-800">
@@ -119,66 +160,81 @@ export default function MyAppointmentsPage() {
             </div>
           </div>
 
-          {/* Filters & Tabs */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6 border-b border-gray-200 pb-4">
-            <div className="flex items-center gap-6 text-sm font-bold">
-              <button 
-                onClick={() => setActiveTab('ALL')}
-                className={`pb-4 -mb-4 border-b-2 transition-colors ${activeTab === 'ALL' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
-              >
-                Tất cả ({total})
-              </button>
-              <button 
-                onClick={() => setActiveTab('UPCOMING')}
-                className={`pb-4 -mb-4 border-b-2 transition-colors ${activeTab === 'UPCOMING' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
-              >
-                Sắp tới ({upcoming})
-              </button>
-              <button 
-                onClick={() => setActiveTab('COMPLETED')}
-                className={`pb-4 -mb-4 border-b-2 transition-colors ${activeTab === 'COMPLETED' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
-              >
-                Đã hoàn thành ({completed})
-              </button>
-              <button 
-                onClick={() => setActiveTab('CANCELED')}
-                className={`pb-4 -mb-4 border-b-2 transition-colors ${activeTab === 'CANCELED' ? 'border-[#2563EB] text-[#2563EB]' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
-              >
-                Đã hủy ({canceled})
-              </button>
+          {/* MỚI: BỘ LỌC TÌM KIẾM THEO GIAO DIỆN YÊU CẦU */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6 flex flex-wrap gap-4 items-end">
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Từ ngày</label>
+              <div className="relative">
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2563EB]" />
+              </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500">
-                <span>Từ ngày</span>
-                <Calendar size={14} />
-                <span className="mx-1">&rarr;</span>
-                <span>Đến ngày</span>
-                <Calendar size={14} />
-              </div>
-
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Đến ngày</label>
               <div className="relative">
-                <select className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-3 pr-8 rounded-lg text-sm font-medium focus:outline-none focus:border-blue-500 min-w-[160px]">
-                  <option>Tất cả chuyên khoa</option>
-                  <option>Nội tổng quát</option>
-                  <option>Da liễu</option>
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2563EB]" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-[150px]">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Trạng thái</label>
+              <div className="relative">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm appearance-none focus:outline-none focus:border-[#2563EB]">
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="Sắp tới">Sắp tới</option>
+                  <option value="Đã hoàn thành">Đã hoàn thành</option>
+                  <option value="Đã hủy">Đã hủy</option>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                  <ChevronRight size={14} className="rotate-90" />
-                </div>
+                <ChevronRight size={14} className="absolute right-3 top-2.5 rotate-90 text-gray-400 pointer-events-none" />
               </div>
-
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Chuyên khoa</label>
               <div className="relative">
+                <select value={specialtyFilter} onChange={(e) => setSpecialtyFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm appearance-none focus:outline-none focus:border-[#2563EB]">
+                  <option value="ALL">Tất cả chuyên khoa</option>
+                  {uniqueSpecialties.map((spec, idx) => (
+                    <option key={idx} value={spec}>{spec}</option>
+                  ))}
+                </select>
+                <ChevronRight size={14} className="absolute right-3 top-2.5 rotate-90 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-[11px] font-bold text-gray-500 mb-1.5">Bệnh nhân</label>
+              <div className="relative">
+                <select value={patientFilter} onChange={(e) => setPatientFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm appearance-none focus:outline-none focus:border-[#2563EB]">
+                  <option value="ALL">Tất cả bệnh nhân</option>
+                  {uniquePatients.map((name, idx) => (
+                    <option key={idx} value={name}>{name}</option>
+                  ))}
+                </select>
+                <ChevronRight size={14} className="absolute right-3 top-2.5 rotate-90 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex-[1.5] min-w-[200px]">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-2.5 text-gray-400 pointer-events-none" />
                 <input 
                   type="text" 
-                  placeholder="Tìm kiếm lịch hẹn..."
-                  className="pl-3 pr-8 py-2 border border-gray-200 rounded-lg text-sm w-[220px] focus:outline-none focus:border-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm lịch hẹn..." 
+                  className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-[#2563EB]" 
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <Search size={14} className="text-gray-400" />
-                </div>
               </div>
             </div>
+            <button 
+              onClick={() => {
+                setFromDate('');
+                setToDate('');
+                setStatusFilter('ALL');
+                setSpecialtyFilter('ALL');
+                setPatientFilter('ALL');
+                setSearchQuery('');
+              }}
+              className="flex items-center gap-2 border border-blue-200 text-[#2563EB] bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-bold transition h-[38px]"
+            >
+              <Trash2 size={16} /> Bỏ lọc
+            </button>
           </div>
 
           {/* Data Table */}
@@ -231,11 +287,11 @@ export default function MyAppointmentsPage() {
                             <img src={apt.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
                             <div>
                               <p className="text-sm font-bold text-gray-900">{apt.patientName}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">{apt.age} tuổi - {apt.gender}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{apt.gender}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-sm font-bold text-gray-700">{apt.patientDetails?.phone || '--'}</td>
+                        <td className="py-4 px-4 text-sm font-bold text-gray-700">{apt.patientPhone || '--'}</td>
                         <td className="py-4 px-4 text-sm font-bold text-gray-700">{apt.room}</td>
                         <td className="py-4 px-4 text-sm">{formattedDate}</td>
                         <td className="py-4 px-4 text-sm font-bold text-gray-900 text-center">{apt.time}</td>

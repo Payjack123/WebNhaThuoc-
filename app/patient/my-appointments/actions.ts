@@ -15,7 +15,7 @@ export async function getMyAppointmentsData() {
 
     const user = await prisma.user.findUnique({ 
       where: { id: userId },
-      select: { id: true, fullName: true, patientProfile: true } 
+      select: { id: true, fullName: true, phone: true, address: true, patientProfile: true } 
     });
 
     if (!user) return { success: false, message: 'Không tìm thấy người dùng' };
@@ -96,6 +96,7 @@ export async function getMyAppointmentsData() {
         const subParts = patientPart.split(' - ');
         patientDetails = {
           name: subParts.find(p => p.startsWith('Người khám: '))?.replace('Người khám: ', '') || '',
+          patientCode: subParts.find(p => p.startsWith('Mã BN: '))?.replace('Mã BN: ', '') || '',
           cccd: subParts.find(p => p.startsWith('CCCD: '))?.replace('CCCD: ', '') || '',
           phone: subParts.find(p => p.startsWith('SĐT: '))?.replace('SĐT: ', '') || '',
           address: subParts.find(p => p.startsWith('ĐC: '))?.replace('ĐC: ', '') || '',

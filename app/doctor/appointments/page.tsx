@@ -337,7 +337,7 @@ export default function DoctorAppointmentsPage() {
                                   <div className="w-12 text-xs font-bold text-gray-500 shrink-0">{apt.time}</div>
                                   <div>
                                     <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                      {apt.patientName} <span className="text-xs font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">{apt.age} tuổi | {apt.gender}</span>
+                                      {apt.patientName} <span className="text-xs font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">{apt.gender}</span>
                                     </p>
                                     <p className="text-xs text-gray-600 mt-1 truncate max-w-[200px]">{apt.reason}</p>
                                   </div>
@@ -412,7 +412,7 @@ export default function DoctorAppointmentsPage() {
                     <img src={apt.avatar} className="w-10 h-10 rounded-full object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-gray-900 truncate">{apt.patientName}</p>
-                      <p className="text-xs text-gray-500">{apt.age} tuổi | {apt.gender}</p>
+                      <p className="text-xs text-gray-500">{apt.gender}</p>
                     </div>
                     <span className="px-2 py-1 text-[10px] font-bold rounded bg-orange-100 text-orange-700 shrink-0 whitespace-nowrap">Đang chờ</span>
                   </div>

@@ -72,6 +72,8 @@ export default function ProfileSettingsPage() {
       languages: formData.languages,
       specialty: formData.specialty,
       experience: formData.experience,
+      certificateNumber: formData.certificateNumber,
+      bio: formData.bio,
       certificates: {
         ...(profile.certificates || {}),
         certificateNumber: formData.certificateNumber,
@@ -187,10 +189,7 @@ export default function ProfileSettingsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Kinh nghiệm làm việc (năm)</label>
                   <input type="number" name="experience" value={formData.experience} onChange={handleChange} className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-slate-700" min="0" placeholder="VD: 10" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Giá khám (VNĐ)</label>
-                  <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-slate-700" min="0" step="50000" placeholder="VD: 150000" />
-                </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Giới thiệu bản thân</label>
                   <textarea name="bio" rows={4} value={formData.bio} onChange={handleChange} className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-slate-700 resize-none" placeholder="Giới thiệu về quá trình công tác, kinh nghiệm chuyên môn..."></textarea>

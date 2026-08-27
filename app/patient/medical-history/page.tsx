@@ -402,32 +402,28 @@ export default function MedicalHistoryPage() {
                       </div>
                     </div>
                     {/* Thông tin người khám */}
-                    {selectedAppointment.patientDetails && (
-                      <>
-                        <div className="h-px bg-gray-100 w-full"></div>
-                        <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
-                          <h4 className="text-sm font-bold text-[#2563EB] mb-3">Thông tin người khám</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Họ và tên</p>
-                              <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails.name}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
-                              <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">CMND/CCCD</p>
-                              <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails.cccd}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Địa chỉ</p>
-                              <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails.address}</p>
-                            </div>
-                          </div>
+                    <div className="h-px bg-gray-100 w-full"></div>
+                    <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+                      <h4 className="text-sm font-bold text-[#2563EB] mb-3">Thông tin người khám</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Họ và tên</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails?.name || userData?.fullName || 'Không có'}</p>
                         </div>
-                      </>
-                    )}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails?.phone || userData?.phone || 'Không có'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">CMND/CCCD</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedAppointment.patientDetails?.cccd || 'Không có'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Địa chỉ</p>
+                          <p className="text-sm font-semibold text-gray-900 truncate" title={selectedAppointment.patientDetails?.address || userData?.address || 'Không có'}>{selectedAppointment.patientDetails?.address || userData?.address || 'Không có'}</p>
+                        </div>
+                      </div>
+                    </div>
 
                     <div className="flex items-start gap-3">
                       <InfoIcon className="text-gray-400 shrink-0 mt-0.5" size={16} />
@@ -436,20 +432,7 @@ export default function MedicalHistoryPage() {
                         <p className="text-sm font-semibold text-gray-900 col-span-2 leading-relaxed bg-yellow-50 p-3 rounded-xl border border-yellow-100">{selectedAppointment.reason}</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <Activity className="text-gray-400 shrink-0 mt-0.5" size={16} />
-                      <div className="grid grid-cols-3 w-full gap-2">
-                        <p className="text-sm text-gray-500">Chẩn đoán</p>
-                        <p className="text-sm font-semibold text-gray-900 col-span-2 leading-relaxed">{selectedAppointment.diagnosis}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Stethoscope className="text-gray-400 shrink-0 mt-0.5" size={16} />
-                      <div className="grid grid-cols-3 w-full gap-2">
-                        <p className="text-sm text-gray-500">Ghi chú của bác sĩ</p>
-                        <p className="text-sm font-semibold text-gray-900 col-span-2 leading-relaxed">{selectedAppointment.notes || 'Không có'}</p>
-                      </div>
-                    </div>
+
                   </div>
 
                   {/* Dịch vụ đã thực hiện */}

@@ -8,6 +8,7 @@ import {
   Search, CalendarRange, Clock, MapPin, User, Stethoscope, Loader2,
   Info, Trash2, Star, CheckCircle, AlertCircle, ArrowRight, Bell, Activity
 } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import PatientSidebar from '@/app/patient/Sidebar';
 import { getMyAppointmentsData, cancelAppointment } from './actions';
 
@@ -352,146 +353,64 @@ export default function MyAppointmentsPage() {
 
       {/* MODAL CHI TIẾT LỊCH HẸN */}
       {isModalOpen && selectedAppointment && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm overflow-y-auto custom-scrollbar">
+          <div className="min-h-screen flex items-center justify-center p-4 py-12">
+            <div className="relative animate-in zoom-in-95 duration-200">
             {/* Nút Đóng */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 z-20 p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"
+              className="absolute -top-4 -right-4 z-20 p-2 bg-white hover:bg-gray-100 rounded-full text-gray-500 shadow-md transition"
             >
               <X size={20} />
             </button>
 
-            {/* Nội dung chi tiết */}
-            <div className="p-6 relative">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4 pr-8">Chi tiết lịch hẹn {selectedAppointment.status === 'Sắp tới' ? 'sắp tới' : ''}</h2>
-
-              {/* Decorative corner */}
-              {selectedAppointment.status === 'Sắp tới' && (
-                <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-full -z-0"></div>
-              )}
-
-              <div className="relative z-10 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
-                
-                {/* Appointment Code */}
-                <div className="flex items-center gap-2 mb-4 bg-gray-50 border border-gray-100 px-4 py-2.5 rounded-xl w-fit">
-                  <p className="text-xs font-medium text-gray-500 uppercase">Mã lịch hẹn:</p>
-                  <p className="font-bold text-gray-900 tracking-wide text-sm">{selectedAppointment.appointmentCode}</p>
-                </div>
-                {/* Date/Time Block */}
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5"><CalendarDays className="text-[#2563EB]" size={20} /></div>
-                  <div>
-                    <p className="font-bold text-gray-900">{selectedAppointment.dayOfWeek}, {selectedAppointment.day}/{selectedAppointment.monthYear.replace('Tháng ', '').replace(', ', '/')}</p>
-                    <p className="font-black text-[#2563EB] mt-0.5 text-lg">{selectedAppointment.time}</p>
-                    <p className="text-sm text-gray-500 mt-1">{selectedAppointment.specialty}</p>
+            <div className="w-[340px] bg-white shadow-2xl relative text-left rounded-3xl overflow-hidden ring-1 ring-gray-200/50">
+              {/* Header */}
+              <div className="text-center p-5 pt-6 border-b-2 border-dashed border-gray-300">
+                <p className="text-xs font-bold uppercase text-gray-500">Hệ thống Y tế</p>
+                <p className="text-sm font-bold uppercase text-gray-800">{selectedAppointment.clinic}</p>
+                <p className="text-xs font-medium text-gray-500 mt-1">Mã lịch: {selectedAppointment.appointmentCode}</p>
+                <div className="flex justify-center my-4">
+                  <div className="p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <QRCode value={selectedAppointment.appointmentCode} size={100} level="M" />
                   </div>
                 </div>
-
-                <div className="h-px bg-gray-100 w-full"></div>
-
-                {/* Doctor Info */}
-                <div className="flex items-start gap-3">
-                  <img src={selectedAppointment.avatar} alt="Doctor" className="w-12 h-12 rounded-full border border-gray-200" />
-                  <div>
-                    <p className="font-bold text-gray-900">{selectedAppointment.doctor}</p>
-                    <p className="text-sm text-gray-500 mt-0.5">{selectedAppointment.doctorTitle}</p>
-                  </div>
-                </div>
-
-                {/* Location Info */}
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5"><MapPin className="text-gray-400" size={20} /></div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{selectedAppointment.room}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{selectedAppointment.clinic}</p>
-                  </div>
-                </div>
-
-                {/* Type Info */}
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5"><User className="text-gray-400" size={20} /></div>
-                  <div>
-                    <p className="text-xs text-gray-500">Hình thức khám</p>
-                    <p className="font-bold text-gray-900 text-sm mt-0.5">{selectedAppointment.type}</p>
-                  </div>
-                </div>
-
-                {/* Patient Info */}
-                {selectedAppointment.patientDetails && (
-                  <>
-                    <div className="h-px bg-gray-100 w-full"></div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <UserCircle2 className="text-[#2563EB]" size={18} />
-                        Thông tin người khám
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
-                        <div>
-                          <p className="text-xs text-gray-500">Họ và tên</p>
-                          <p className="font-bold text-sm text-gray-900 mt-0.5">{selectedAppointment.patientDetails.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Số điện thoại</p>
-                          <p className="font-bold text-sm text-gray-900 mt-0.5">{selectedAppointment.patientDetails.phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">CMND/CCCD</p>
-                          <p className="font-bold text-sm text-gray-900 mt-0.5">{selectedAppointment.patientDetails.cccd}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Địa chỉ</p>
-                          <p className="font-bold text-sm text-gray-900 mt-0.5 truncate" title={selectedAppointment.patientDetails.address}>{selectedAppointment.patientDetails.address}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Note */}
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5"><Stethoscope className="text-gray-400" size={20} /></div>
-                  <div>
-                    <p className="text-xs text-gray-500">Triệu chứng / Lý do khám</p>
-                    <p className="font-medium text-gray-800 text-sm mt-0.5 bg-yellow-50 p-3 rounded-xl border border-yellow-100 italic">
-                      {selectedAppointment.note || 'Không có ghi chú'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="pt-2 space-y-3">
-                  {(selectedAppointment.status === 'Sắp tới' || selectedAppointment.status === 'Chờ xác nhận') && (
-                    <button
-                      onClick={() => setIsCancelConfirmOpen(true)}
-                      className="w-full bg-white text-red-500 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-50 transition"
-                    >
-                      Hủy lịch hẹn
-                    </button>
-                  )}
-                </div>
-
-                {/* Notices */}
-                <div className="pt-4 border-t border-gray-100">
-                  <h3 className="flex items-center gap-1.5 text-sm font-bold text-[#2563EB] mb-3">
-                    <Info size={16} /> Lưu ý
-                  </h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <CheckCircle className="text-[#2563EB] shrink-0 mt-0.5" size={14} />
-                      <span>Vui lòng đến đúng giờ hẹn.</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <CheckCircle className="text-[#2563EB] shrink-0 mt-0.5" size={14} />
-                      <span>Nếu không thể đến, vui lòng hủy hoặc dời lịch trước ít nhất 2 giờ.</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-sm text-gray-600">
-                      <CheckCircle className="text-[#2563EB] shrink-0 mt-0.5" size={14} />
-                      <span>Mang theo CMND/CCCD và thẻ BHYT (nếu có).</span>
-                    </li>
-                  </ul>
-                </div>
+                <h3 className="text-xl font-bold uppercase mt-1 tracking-wider text-gray-900">Phiếu Khám Bệnh</h3>
               </div>
+
+              {/* Body */}
+              <div className="p-5 space-y-2.5 text-sm text-gray-800 border-b-2 border-dashed border-gray-300">
+                <div className="flex justify-between"><span className="text-gray-500">Mã BN:</span> <span className="font-bold text-right uppercase">{selectedAppointment.patientDetails?.patientCode || userData?.patientProfile?.patientCode || 'Không có'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Họ và tên:</span> <span className="font-bold text-right uppercase">{selectedAppointment.patientDetails?.name || userData?.fullName || 'Không có'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">SĐT:</span> <span className="font-bold text-right">{selectedAppointment.patientDetails?.phone || userData?.phone || 'Không có'}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">CCCD:</span> <span className="font-bold text-right">{selectedAppointment.patientDetails?.cccd || 'Không có'}</span></div>
+                <div className="flex justify-between items-start gap-4"><span className="text-gray-500 shrink-0">Địa chỉ:</span> <span className="font-bold text-right truncate">{selectedAppointment.patientDetails?.address || userData?.address || 'Không có'}</span></div>
+                <div className="h-px bg-gray-100 my-1"></div>
+                <div className="flex justify-between"><span className="text-gray-500">YC khám:</span> <span className="font-bold text-right">{selectedAppointment.specialty}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Bác sĩ:</span> <span className="font-bold text-right">{selectedAppointment.doctor}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Giá khám:</span> <span className="font-black text-[#2563EB] text-right">{(selectedAppointment.price || 150000).toLocaleString('vi-VN')} đ</span></div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 text-center bg-gray-50">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">Giờ khám dự kiến</p>
+                <p className="text-5xl font-black text-gray-900 my-2">{selectedAppointment.time}</p>
+                <p className="text-sm font-medium text-gray-600">Ngày {selectedAppointment.day}/{selectedAppointment.monthYear.replace('Tháng ', '').replace(', ', '/')}</p>
+              </div>
+
+            </div>
+
+            {/* Actions */}
+            {(selectedAppointment.status === 'Sắp tới' || selectedAppointment.status === 'Chờ xác nhận') && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setIsCancelConfirmOpen(true)}
+                  className="w-full bg-white text-red-500 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-50 shadow-lg transition"
+                >
+                  Hủy lịch hẹn
+                </button>
+              </div>
+            )}
             </div>
           </div>
         </div>
