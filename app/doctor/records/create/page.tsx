@@ -156,19 +156,10 @@ function DoctorMedicalRecordCreateContent() {
 
         {/* SCROLLABLE BODY */}
         <div className="flex-1 overflow-y-auto px-6 py-6 pb-28 custom-scrollbar bg-[#FAFAFA]">
-          <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="w-full max-w-none mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* CỘT 1 */}
-            <div className="space-y-6">
-
-              {/* Tìm kiếm */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-[11px] font-bold text-gray-600 mb-3 uppercase tracking-wider">TÌM KIẾM BỆNH NHÂN</h3>
-                <div className="relative">
-                  <input type="text" placeholder="Nhập tên, mã bệnh nhân, SĐT..." className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400" />
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                </div>
-              </div>
+            <div className="flex flex-col gap-6 h-full">
 
               {/* Thông tin bệnh nhân */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -214,6 +205,13 @@ function DoctorMedicalRecordCreateContent() {
                 <button className="w-full py-2.5 bg-white border border-blue-200 text-[#2563EB] font-bold rounded-lg text-[13px] hover:bg-blue-50 transition-colors">
                   Xem hồ sơ sức khỏe
                 </button>
+              </div>
+
+              {/* Khám lâm sàng */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 relative flex flex-col flex-1">
+                <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">Khám lâm sàng</h3>
+                <textarea value={clinicalExam} onChange={e => setClinicalExam(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
+                <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{clinicalExam.length}/2000</span>
               </div>
 
             </div>
@@ -302,11 +300,11 @@ function DoctorMedicalRecordCreateContent() {
                 </div>
               </div>
 
-              {/* Khám lâm sàng */}
+              {/* Ghi chú của bác sĩ */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 relative flex flex-col flex-1">
-                <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">Khám lâm sàng</h3>
-                <textarea value={clinicalExam} onChange={e => setClinicalExam(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
-                <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{clinicalExam.length}/2000</span>
+                <h3 className="text-[11px] font-bold text-gray-700 mb-3 uppercase tracking-wider">Ghi chú của bác sĩ <span className="text-gray-400 font-normal lowercase tracking-normal">(không bắt buộc)</span></h3>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập ghi chú thêm nếu cần..." className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
+                <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{notes.length}/1000</span>
               </div>
 
             </div>
@@ -378,16 +376,6 @@ function DoctorMedicalRecordCreateContent() {
 
             </div>
           </div>
-
-          {/* Ghi chú dưới cùng */}
-          <div className="max-w-[1400px] mx-auto mt-6">
-            <h3 className="text-[11px] font-bold text-gray-700 mb-2 uppercase tracking-wider">Ghi chú của bác sĩ <span className="text-gray-400 font-normal lowercase tracking-normal">(không bắt buộc)</span></h3>
-            <div className="relative">
-              <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập ghi chú thêm nếu cần..." className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-[13px] focus:border-[#2563EB] outline-none resize-none"></textarea>
-              <span className="absolute bottom-3 right-4 text-[10px] text-gray-400">0/1000</span>
-            </div>
-          </div>
-
         </div>
 
         {/* BOTTOM ACTION BAR */}
