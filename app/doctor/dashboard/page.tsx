@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { 
-  CalendarDays, CheckCircle2, Clock, Users, Activity, 
+import {
+  CalendarDays, CheckCircle2, Clock, Users, Activity,
   ArrowRight, Search, Bell, MoreVertical, FileText, Pill,
   Stethoscope, User, Calendar, Megaphone
 } from 'lucide-react';
@@ -56,17 +56,17 @@ export default function DoctorDashboard() {
         {/* HEADER CỐ ĐỊNH */}
         <header className="bg-white border-b border-gray-100 px-8 h-20 shrink-0 flex items-center justify-between sticky top-0 z-10">
           <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
-            <input 
-              type="text" 
-              placeholder="Tìm bệnh nhân, mã hồ sơ, lịch khám..." 
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Tìm bệnh nhân, mã hồ sơ, lịch khám..."
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
             />
           </div>
           <div className="flex items-center gap-6">
             <div className="flex gap-4">
               <button className="relative text-gray-400 hover:text-gray-600 transition">
-                <Bell size={20}/>
+                <Bell size={20} />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">3</span>
               </button>
             </div>
@@ -76,14 +76,14 @@ export default function DoctorDashboard() {
                 <p className="text-sm font-bold text-gray-900">BS. {doctor.fullName}</p>
                 <p className="text-xs text-gray-500">{doctor.doctorProfile?.specialty || 'Khoa Nội tổng quát'}</p>
               </div>
-              <img src={doctor.doctorProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.fullName)}&background=2563EB&color=fff`} alt="Doctor" className="w-10 h-10 rounded-full border border-gray-200 object-cover"/>
+              <img src={doctor.doctorProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.fullName)}&background=2563EB&color=fff`} alt="Doctor" className="w-10 h-10 rounded-full border border-gray-200 object-cover" />
             </div>
           </div>
         </header>
 
         {/* NỘI DUNG SCROLL */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          
+
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900">Xin chào, BS. {doctor.fullName}!</h1>
             <p className="text-sm text-gray-500 mt-1">Chúc bạn một ngày làm việc hiệu quả.</p>
@@ -94,7 +94,7 @@ export default function DoctorDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-blue-50 text-[#2563EB] rounded-xl flex items-center justify-center shrink-0">
-                  <CalendarDays size={20}/>
+                  <CalendarDays size={20} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase">Lịch khám hôm nay</p>
@@ -106,7 +106,7 @@ export default function DoctorDashboard() {
                   <span className="text-sm text-gray-500 mb-1 font-medium">bệnh nhân</span>
                 </div>
                 <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] hover:underline flex items-center gap-1 mt-2">
-                  Xem chi tiết <ArrowRight size={12}/>
+                  Xem chi tiết <ArrowRight size={12} />
                 </Link>
               </div>
             </div>
@@ -114,7 +114,7 @@ export default function DoctorDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={20}/>
+                  <CheckCircle2 size={20} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase">Đã khám</p>
@@ -132,7 +132,7 @@ export default function DoctorDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shrink-0">
-                  <Clock size={20}/>
+                  <Clock size={20} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase">Đang chờ khám</p>
@@ -150,7 +150,7 @@ export default function DoctorDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
-                  <CalendarDays size={20}/>
+                  <CalendarDays size={20} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase">Chưa khám</p>
@@ -168,7 +168,7 @@ export default function DoctorDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center shrink-0">
-                  <Activity size={20}/>
+                  <Activity size={20} />
                 </div>
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase">Tổng bệnh nhân</p>
@@ -186,12 +186,12 @@ export default function DoctorDashboard() {
 
           {/* 2. MIDDLE ROW (3 COLUMNS) */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-            
+
             {/* CỘT 1: LỊCH KHÁM HÔM NAY */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
               <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
                 <h2 className="font-bold text-base text-gray-900">Lịch khám hôm nay</h2>
-                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] hover:underline">Xem tất cả</Link>
+                <Link href="/doctor/today-appointments" className="text-xs font-bold text-[#2563EB] hover:underline">Xem tất cả</Link>
               </div>
               <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                 <div className="space-y-1">
@@ -214,7 +214,7 @@ export default function DoctorDashboard() {
                           ) : (
                             <span className="bg-blue-50 text-[#2563EB] px-2 py-1 rounded text-[10px] font-bold shrink-0">Chờ khám</span>
                           )}
-                          <MoreVertical size={16} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0"/>
+                          <MoreVertical size={16} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0" />
                         </div>
                       </div>
                     )
@@ -222,8 +222,8 @@ export default function DoctorDashboard() {
                 </div>
               </div>
               <div className="p-3 border-t border-gray-100 shrink-0 flex justify-center">
-                <Link href="/doctor/appointments" className="text-xs font-bold text-[#2563EB] bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1 w-full justify-center">
-                  Xem lịch đầy đủ <ArrowRight size={14}/>
+                <Link href="/doctor/today-appointments" className="text-xs font-bold text-[#2563EB] bg-blue-50 hover:bg-blue-100 px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1 w-full justify-center">
+                  Xem lịch đầy đủ <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -269,23 +269,23 @@ export default function DoctorDashboard() {
                 <div className="w-full relative min-h-[160px]">
                   <svg viewBox="0 0 400 150" className="w-full h-full preserve-aspect-ratio-none">
                     {/* Grid lines */}
-                    <line x1="0" y1="30" x2="400" y2="30" stroke="#f3f4f6" strokeWidth="1"/>
-                    <line x1="0" y1="70" x2="400" y2="70" stroke="#f3f4f6" strokeWidth="1"/>
-                    <line x1="0" y1="110" x2="400" y2="110" stroke="#f3f4f6" strokeWidth="1"/>
-                    
+                    <line x1="0" y1="30" x2="400" y2="30" stroke="#f3f4f6" strokeWidth="1" />
+                    <line x1="0" y1="70" x2="400" y2="70" stroke="#f3f4f6" strokeWidth="1" />
+                    <line x1="0" y1="110" x2="400" y2="110" stroke="#f3f4f6" strokeWidth="1" />
+
                     {/* Graph line */}
-                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round"/>
-                    
+                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" />
+
                     {/* Area under line */}
-                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50 L 400 150 L 0 150 Z" fill="url(#blue-gradient)" opacity="0.1"/>
-                    
+                    <path d="M 0 100 Q 50 80 100 60 T 200 40 T 300 20 T 400 50 L 400 150 L 0 150 Z" fill="url(#blue-gradient)" opacity="0.1" />
+
                     {/* Data points */}
-                    <circle cx="0" cy="100" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
-                    <circle cx="100" cy="60" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
-                    <circle cx="200" cy="40" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
-                    <circle cx="300" cy="20" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
-                    <circle cx="400" cy="50" r="4" fill="#2563EB" stroke="white" strokeWidth="2"/>
-                    
+                    <circle cx="0" cy="100" r="4" fill="#2563EB" stroke="white" strokeWidth="2" />
+                    <circle cx="100" cy="60" r="4" fill="#2563EB" stroke="white" strokeWidth="2" />
+                    <circle cx="200" cy="40" r="4" fill="#2563EB" stroke="white" strokeWidth="2" />
+                    <circle cx="300" cy="20" r="4" fill="#2563EB" stroke="white" strokeWidth="2" />
+                    <circle cx="400" cy="50" r="4" fill="#2563EB" stroke="white" strokeWidth="2" />
+
                     <defs>
                       <linearGradient id="blue-gradient" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor="#2563EB" />
@@ -326,7 +326,7 @@ export default function DoctorDashboard() {
 
           {/* 3. BOTTOM ROW (3 COLUMNS) */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            
+
             {/* CỘT 1: DANH SÁCH CHỜ KHÁM */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
               <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
@@ -345,7 +345,7 @@ export default function DoctorDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-[11px] font-bold text-gray-700">{apt.reason || 'Khám tổng quát'}</p>
-                        <p className="text-[10px] text-gray-400 flex items-center gap-1 justify-end mt-0.5"><Clock size={10}/> Đăng ký lúc {apt.bookingTime}</p>
+                        <p className="text-[10px] text-gray-400 flex items-center gap-1 justify-end mt-0.5"><Clock size={10} /> Đăng ký lúc {apt.bookingTime}</p>
                       </div>
                     </div>
                   ))}
@@ -353,7 +353,7 @@ export default function DoctorDashboard() {
               </div>
               <div className="p-4 border-t border-gray-100 shrink-0">
                 <button className="w-full py-2.5 bg-blue-50 text-[#2563EB] rounded-xl font-bold text-sm hover:bg-blue-100 transition flex items-center justify-center gap-2">
-                  <Megaphone size={16}/> Gọi bệnh nhân tiếp theo
+                  <Megaphone size={16} /> Gọi bệnh nhân tiếp theo
                 </button>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function DoctorDashboard() {
               </div>
               <div className="p-4 border-t border-gray-100 shrink-0">
                 <Link href="/doctor/records" className="w-full py-2.5 bg-white border border-blue-200 text-[#2563EB] rounded-xl font-bold text-sm hover:bg-blue-50 transition flex items-center justify-center gap-2">
-                  Tạo hồ sơ mới <ArrowRight size={14}/>
+                  Tạo hồ sơ mới <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -396,27 +396,27 @@ export default function DoctorDashboard() {
                 <h2 className="font-bold text-base text-gray-900">Thao tác nhanh</h2>
               </div>
               <div className="flex-1 p-5 grid grid-cols-2 grid-rows-2 gap-4">
-                
+
                 <Link href="/doctor/appointments" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
-                  <Stethoscope size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <Stethoscope size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors" />
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Khám bệnh</h3>
                   <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo hồ sơ khám</p>
                 </Link>
 
                 <Link href="/doctor/prescriptions/create" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
-                  <Pill size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <Pill size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors" />
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Đơn thuốc</h3>
                   <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo đơn thuốc mới</p>
                 </Link>
 
                 <Link href="/doctor/records" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
-                  <FileText size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <FileText size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors" />
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Hồ sơ bệnh án</h3>
                   <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tạo hồ sơ mới</p>
                 </Link>
 
                 <Link href="/doctor/patients" className="bg-blue-50 hover:bg-[#2563EB] hover:text-white group border border-blue-100 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300">
-                  <User size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors"/>
+                  <User size={24} className="text-[#2563EB] group-hover:text-white mb-2 transition-colors" />
                   <h3 className="font-bold text-sm text-gray-900 group-hover:text-white">Tìm bệnh nhân</h3>
                   <p className="text-[10px] text-gray-500 group-hover:text-blue-200 mt-0.5">Tra cứu hồ sơ bệnh nhân</p>
                 </Link>

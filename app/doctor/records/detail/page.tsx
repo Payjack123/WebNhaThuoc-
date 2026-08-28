@@ -10,6 +10,7 @@ import {
   Activity,
   Stethoscope,
   Clock,
+  Calendar,
   Plus,
   Printer,
   Save,
@@ -307,48 +308,36 @@ function MedicalRecordDetailContent() {
                         {record.pastVisits.map((visit: any) => (
                           <div
                             key={visit.id}
-                            className="p-6 hover:bg-blue-50/50 transition-colors flex gap-6"
+                            className="group p-5 hover:bg-blue-50/40 transition-all flex justify-between items-center bg-white border border-transparent hover:border-blue-100 rounded-xl m-2 hover:shadow-sm"
                           >
-                            <div className="w-32 shrink-0">
-                              <p className="text-[13px] font-bold text-[#2563EB] mb-1">
-                                {visit.date}
-                              </p>
-                              <p className="text-[11px] font-bold text-gray-600 bg-gray-100 inline-block px-2 py-0.5 rounded">
-                                {visit.doctorName}
-                              </p>
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 group-hover:scale-105 transition-transform">
+                                <Calendar size={22} className="stroke-[1.5]" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <p className="text-[15px] font-black text-gray-900">
+                                    {visit.date}
+                                  </p>
+                                  <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100">
+                                    Đã hoàn thành
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[13px]">
+                                  <Stethoscope size={14} className="text-gray-400" />
+                                  <span className="font-semibold text-gray-700">
+                                    {visit.doctorName}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex-1 space-y-2">
-                              <p className="text-[13px]">
-                                <span className="text-gray-500 font-medium w-24 inline-block">
-                                  Lý do khám:
-                                </span>{" "}
-                                <span className="font-medium text-gray-900">
-                                  {visit.symptoms}
-                                </span>
-                              </p>
-                              <p className="text-[13px]">
-                                <span className="text-gray-500 font-medium w-24 inline-block">
-                                  Chẩn đoán:
-                                </span>{" "}
-                                <span className="font-bold text-gray-900">
-                                  {visit.diagnosis}
-                                </span>
-                              </p>
-                              <p className="text-[13px]">
-                                <span className="text-gray-500 font-medium w-24 inline-block">
-                                  Điều trị:
-                                </span>{" "}
-                                <span className="text-gray-900">
-                                  {visit.treatment}
-                                </span>
-                              </p>
-                            </div>
-                            <div className="shrink-0 flex items-center">
+                            <div className="shrink-0 flex items-center gap-3">
                               <button
                                 onClick={() => setSelectedVisit(visit)}
-                                className="px-4 py-2 bg-white border border-blue-200 text-blue-600 text-[12px] font-bold rounded-lg hover:bg-blue-50 transition-colors"
+                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-bold rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors flex items-center gap-2"
                               >
                                 Xem chi tiết
+                                <ChevronRight size={16} />
                               </button>
                             </div>
                           </div>
