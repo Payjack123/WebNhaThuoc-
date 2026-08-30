@@ -116,8 +116,9 @@ function MedicalRecordDetailContent() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* TOP HEADER */}
-        <header className="bg-white border-b border-gray-100 shrink-0 z-10 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-gray-100 shrink-0 z-10 flex justify-center">
+          <div className="w-full px-6 lg:px-12 xl:px-24 2xl:px-32 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/doctor/records")}
               className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-500"
@@ -173,16 +174,18 @@ function MedicalRecordDetailContent() {
               </div>
             </div>
           </div>
+          </div>
         </header>
 
         {/* SCROLLABLE BODY */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 pb-28 custom-scrollbar">
-          {!id || !record ? (
-            renderEmptyState()
-          ) : (
-            <div className="max-w-[1400px] mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto pb-28 custom-scrollbar flex flex-col items-center">
+          <div className="w-full px-6 lg:px-12 xl:px-24 2xl:px-32 py-6">
+            {!id || !record ? (
+              renderEmptyState()
+            ) : (
+              <div className="w-full space-y-6">
               {/* PATIENT INFO CARD */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 flex items-start justify-between">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 flex items-start justify-between">
                 <div className="flex items-start gap-6">
                   <img
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(record.patientName)}&background=E0E7FF&color=2563EB&bold=true`}
@@ -276,18 +279,16 @@ function MedicalRecordDetailContent() {
               </div>
 
               {/* TABS */}
-              <div className="bg-white rounded-xl border border-gray-200 px-2 pt-2 pb-0">
-                <div className="flex overflow-x-auto custom-scrollbar gap-2 px-2">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.name}
-                      onClick={() => setActiveTab(tab.name)}
-                      className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-bold whitespace-nowrap transition-all border-b-2 ${activeTab === tab.name ? "border-[#2563EB] text-[#2563EB]" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-t-lg"}`}
-                    >
-                      <tab.icon size={15} /> {tab.name}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex gap-3">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.name}
+                    onClick={() => setActiveTab(tab.name)}
+                    className={`flex items-center gap-2 px-6 py-2.5 text-[13px] font-bold rounded-xl transition-all ${activeTab === tab.name ? "bg-[#2563EB] text-white shadow-md shadow-blue-500/20" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                  >
+                    <tab.icon size={15} /> {tab.name}
+                  </button>
+                ))}
               </div>
 
               {/* MAIN GRID */}
@@ -350,7 +351,7 @@ function MedicalRecordDetailContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* COL 1: Thông tin y tế cơ bản */}
                   <div className="space-y-6">
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">
                         Thông tin lần khám
                       </h3>
@@ -403,7 +404,7 @@ function MedicalRecordDetailContent() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                         <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">
                           Bệnh sử
                         </h3>
@@ -412,7 +413,7 @@ function MedicalRecordDetailContent() {
                         </p>
 
                       </div>
-                      <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                         <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">
                           Tiền sử bệnh
                         </h3>
@@ -428,12 +429,12 @@ function MedicalRecordDetailContent() {
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">
                         Dấu hiệu sinh tồn
                       </h3>
                       <div className="grid grid-cols-4 gap-2">
-                        <div className="bg-red-50/50 border border-red-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20">
+                        <div className="bg-gradient-to-br from-red-50 to-white border border-red-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             Huyết áp
                           </span>
@@ -444,7 +445,7 @@ function MedicalRecordDetailContent() {
                             mmHg
                           </span>
                         </div>
-                        <div className="bg-emerald-50/50 border border-emerald-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20">
+                        <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             Nhịp tim
                           </span>
@@ -455,7 +456,7 @@ function MedicalRecordDetailContent() {
                             lần/phút
                           </span>
                         </div>
-                        <div className="bg-blue-50/50 border border-blue-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20">
+                        <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             Nhịp thở
                           </span>
@@ -466,7 +467,7 @@ function MedicalRecordDetailContent() {
                             lần/phút
                           </span>
                         </div>
-                        <div className="bg-orange-50/50 border border-orange-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20">
+                        <div className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             Nhiệt độ
                           </span>
@@ -477,7 +478,7 @@ function MedicalRecordDetailContent() {
                             °C
                           </span>
                         </div>
-                        <div className="bg-purple-50/50 border border-purple-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20 mt-2">
+                        <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20 mt-2">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             SpO₂
                           </span>
@@ -490,7 +491,7 @@ function MedicalRecordDetailContent() {
                             %
                           </span>
                         </div>
-                        <div className="bg-cyan-50/50 border border-cyan-50 rounded-lg p-2 text-center flex flex-col items-center justify-center h-20 mt-2">
+                        <div className="bg-gradient-to-br from-cyan-50 to-white border border-cyan-100 rounded-2xl shadow-sm p-2 text-center flex flex-col items-center justify-center h-20 mt-2">
                           <span className="text-[10px] text-gray-500 font-medium mb-0.5">
                             Cân nặng
                           </span>
@@ -504,7 +505,7 @@ function MedicalRecordDetailContent() {
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">
                         Khám lâm sàng
                       </h3>
@@ -523,7 +524,7 @@ function MedicalRecordDetailContent() {
 
                   {/* COL 2: Chẩn đoán & Hướng điều trị */}
                   <div className="space-y-6">
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-5 uppercase tracking-wider border-b border-gray-100 pb-3">
                         Chẩn đoán
                       </h3>
@@ -565,7 +566,7 @@ function MedicalRecordDetailContent() {
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider border-b border-gray-100 pb-3">
                         Hướng điều trị
                       </h3>
@@ -578,7 +579,7 @@ function MedicalRecordDetailContent() {
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider border-b border-gray-100 pb-3">
                         Kế hoạch tái khám
                       </h3>
@@ -610,7 +611,7 @@ function MedicalRecordDetailContent() {
                     </div>
 
                     {/* Ghi chú */}
-                    <div className="bg-[#FFFDF5] border border-[#FDE68A] rounded-xl p-5 relative">
+                    <div className="bg-[#FFFDF5] border border-[#FDE68A] rounded-2xl p-5 relative">
                       <h3 className="text-[11px] font-bold text-gray-900 mb-2 uppercase tracking-wider">
                         Ghi chú của bác sĩ
                       </h3>
@@ -644,7 +645,7 @@ function MedicalRecordDetailContent() {
                   {/* COL 3: Đơn thuốc, Xét nghiệm, CĐHA, Ghi chú */}
                   <div className="space-y-6">
                     {/* Đơn thuốc */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider">
                           Đơn thuốc ({record.prescriptions?.[0]?.items?.length || 0})
@@ -689,7 +690,7 @@ function MedicalRecordDetailContent() {
                     </div>
 
                     {/* Xét nghiệm */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
                           Xét nghiệm (1){" "}
@@ -731,7 +732,7 @@ function MedicalRecordDetailContent() {
                     </div>
 
                     {/* Lịch sử khám */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                       <h3 className="text-[11px] font-bold text-gray-900 mb-4 uppercase tracking-wider">
                         Lịch sử khám ({record.pastVisits?.length || 0})
                       </h3>
@@ -790,14 +791,16 @@ function MedicalRecordDetailContent() {
                   </div>
                 </div>
               )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* BOTTOM FIXED ACTION BAR */}
         {!id || !record ? null : (
-          <div className="bg-white border-t border-gray-100 px-8 py-3.5 flex items-center justify-between shrink-0 z-20">
-            <button className="flex items-center gap-1.5 text-red-500 border border-red-200 hover:bg-red-50 px-5 py-2 rounded-lg font-bold transition-colors text-[13px]">
+          <div className="bg-white border-t border-gray-100 shrink-0 z-20 flex justify-center">
+            <div className="w-full px-8 lg:px-12 xl:px-24 2xl:px-32 py-3.5 flex items-center justify-between">
+              <button className="flex items-center gap-1.5 text-red-500 border border-red-200 hover:bg-red-50 px-5 py-2 rounded-lg font-bold transition-colors text-[13px]">
               Kết thúc điều trị
             </button>
             <div className="flex items-center gap-3">
@@ -807,9 +810,10 @@ function MedicalRecordDetailContent() {
               <button className="flex items-center gap-1.5 px-5 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors">
                 <Save size={16} /> Lưu nháp
               </button>
-              <button className="flex items-center gap-1.5 px-6 py-2 bg-[#2563EB] text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 transition-colors">
+              <button className="flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-blue-600 to-[#2563EB] text-white rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/20 text-[13px] font-bold hover:bg-blue-700 transition-colors">
                 <Save size={16} /> Lưu bệnh án
               </button>
+            </div>
             </div>
           </div>
         )}
@@ -842,7 +846,7 @@ function MedicalRecordDetailContent() {
                     <h4 className="text-[11px] font-bold text-[#2563EB] uppercase tracking-wider flex items-center gap-1.5">
                       <Activity size={14} /> Khám lâm sàng
                     </h4>
-                    <div className="bg-gray-50/50 rounded-xl p-4 text-[13px] text-gray-800 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                    <div className="bg-gray-50/50 rounded-2xl p-4 text-[13px] text-gray-800 leading-relaxed border border-gray-100 whitespace-pre-wrap">
                       {(selectedVisit.clinicalExam || selectedVisit.symptoms)?.replace(/ - /g, '\n- ')}
                     </div>
                   </div>
@@ -852,7 +856,7 @@ function MedicalRecordDetailContent() {
                     <h4 className="text-[11px] font-bold text-[#2563EB] uppercase tracking-wider flex items-center gap-1.5">
                       <Stethoscope size={14} /> Chẩn đoán
                     </h4>
-                    <div className="bg-blue-50/50 rounded-xl p-4 text-[13px] font-bold text-gray-900 leading-relaxed border border-blue-100">
+                    <div className="bg-blue-50/50 rounded-2xl p-4 text-[13px] font-bold text-gray-900 leading-relaxed border border-blue-100">
                       {selectedVisit.diagnosis}
                       {selectedVisit.secondaryDiagnosis && selectedVisit.secondaryDiagnosis !== 'Không có' && (
                         <div className="mt-2 pt-2 border-t border-blue-100 font-normal text-gray-700">
@@ -869,7 +873,7 @@ function MedicalRecordDetailContent() {
                     <h4 className="text-[11px] font-bold text-[#2563EB] uppercase tracking-wider flex items-center gap-1.5">
                       <Pill size={14} /> Kế hoạch điều trị
                     </h4>
-                    <div className="bg-emerald-50/50 rounded-xl p-4 text-[13px] text-gray-800 leading-relaxed border border-emerald-100 whitespace-pre-wrap">
+                    <div className="bg-emerald-50/50 rounded-2xl p-4 text-[13px] text-gray-800 leading-relaxed border border-emerald-100 whitespace-pre-wrap">
                       {selectedVisit.treatment?.replace(/ - /g, '\n- ')}
                     </div>
                   </div>
@@ -879,7 +883,7 @@ function MedicalRecordDetailContent() {
                     <h4 className="text-[11px] font-bold text-[#2563EB] uppercase tracking-wider flex items-center gap-1.5">
                       <Clock size={14} /> Hẹn tái khám
                     </h4>
-                    <div className="bg-orange-50/50 rounded-xl p-4 text-[13px] text-gray-800 leading-relaxed border border-orange-100">
+                    <div className="bg-orange-50/50 rounded-2xl p-4 text-[13px] text-gray-800 leading-relaxed border border-orange-100">
                       {selectedVisit.followUpDate ? (
                         <>
                           <p>
@@ -905,7 +909,7 @@ function MedicalRecordDetailContent() {
                   <h4 className="text-[11px] font-bold text-[#2563EB] uppercase tracking-wider flex items-center gap-1.5">
                     <FileText size={14} /> Ghi chú của bác sĩ
                   </h4>
-                  <div className="bg-[#FFFDF5] rounded-xl p-4 text-[13px] text-gray-800 leading-relaxed border border-[#FDE68A] whitespace-pre-wrap">
+                  <div className="bg-[#FFFDF5] rounded-2xl p-4 text-[13px] text-gray-800 leading-relaxed border border-[#FDE68A] whitespace-pre-wrap">
                     {selectedVisit.notes || "Không có ghi chú"}
                   </div>
                 </div>

@@ -14,7 +14,6 @@ export default function TestResultsPage() {
   const router = useRouter();
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTestId, setSelectedTestId] = useState<number | null>(null);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,13 +26,6 @@ export default function TestResultsPage() {
       const res = await getTestResults();
       if (res.success && res.data) {
         setData(res.data);
-        // Automatically select the first one if it has results
-        const firstCompleted = res.data.find(t => t.status === 'Có kết quả' || t.status === 'Bác sĩ đã xác nhận');
-        if (firstCompleted) {
-          setSelectedTestId(firstCompleted.id);
-        } else if (res.data.length > 0) {
-          setSelectedTestId(res.data[0].id);
-        }
       }
       setIsLoading(false);
     };
@@ -50,8 +42,6 @@ export default function TestResultsPage() {
     const matchesStatus = selectedStatus === 'Tất cả' || test.status === selectedStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
-
-  const selectedTest = data.find(t => t.id === selectedTestId);
 
   const getStatusConfig = (status: string) => {
     switch(status) {
@@ -105,10 +95,10 @@ export default function TestResultsPage() {
         </header>
 
         {/* PAGE CONTENT */}
-        <div className="flex-1 overflow-hidden p-6 lg:p-8 flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex-1 overflow-hidden p-6 lg:p-8 flex flex-col gap-6 lg:gap-8">
           
           {/* LEFT: LIST & FILTERS */}
-          <div className="w-full lg:w-1/3 flex flex-col gap-4 h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden shrink-0">
+          <div className="w-full flex flex-col gap-4 h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden shrink-0">
             <div className="p-5 border-b border-gray-100 space-y-4">
               <h2 className="text-lg font-black text-gray-900">Danh sách xét nghiệm</h2>
               
@@ -143,200 +133,48 @@ export default function TestResultsPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-2">
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
               {isLoading ? (
                 <div className="flex justify-center p-8"><Activity className="animate-spin text-indigo-500" /></div>
               ) : filteredData.length > 0 ? (
-                filteredData.map(test => {
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredData.map(test => {
                   const statusConfig = getStatusConfig(test.status);
-                  const isSelected = selectedTestId === test.id;
                   return (
                     <div 
                       key={test.id}
-                      onClick={() => setSelectedTestId(test.id)}
-                      className={`p-4 rounded-xl cursor-pointer transition-all border ${
-                        isSelected 
-                          ? 'bg-indigo-50 border-indigo-200 shadow-sm' 
-                          : 'bg-white border-transparent hover:border-gray-200 hover:bg-gray-50'
-                      }`}
+                      className="p-5 rounded-2xl transition-all border bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md flex flex-col justify-between"
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex justify-between items-start mb-4">
                         <div className="flex gap-3">
-                          <div className={`p-2 rounded-lg bg-white shadow-sm border ${isSelected ? 'border-indigo-100' : 'border-gray-100'}`}>
+                          <div className="p-3 rounded-xl bg-indigo-50 shadow-sm border border-indigo-100/50 text-indigo-600">
                             {getTypeIcon(test.type)}
                           </div>
                           <div>
-                            <h3 className={`text-sm font-bold ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>{test.name}</h3>
-                            <p className="text-xs text-gray-500 mt-1">{test.date} • {test.time}</p>
+                            <h3 className="text-base font-bold text-gray-900">{test.name}</h3>
+                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5"><Clock size={12}/> {test.date} • {test.time}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                         <span className="text-xs font-semibold text-gray-500">{test.code}</span>
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${statusConfig.bg} ${statusConfig.color}`}>
+                        <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold ${statusConfig.bg} ${statusConfig.color}`}>
                           {statusConfig.icon} {test.status}
                         </div>
                       </div>
+                      <Link href={`/patient/test-results/${test.id}`} className="mt-4 w-full py-2.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl text-sm font-bold transition-colors text-center block">
+                        Xem chi tiết
+                      </Link>
                     </div>
                   );
-                })
+                })}
+                </div>
               ) : (
-                <div className="text-center p-8 text-gray-500 text-sm">
+                <div className="text-center p-12 text-gray-500 text-sm">
                   Không tìm thấy kết quả nào
                 </div>
               )}
             </div>
-          </div>
-
-          {/* RIGHT: DETAIL VIEW */}
-          <div className="w-full lg:flex-1 h-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-            {selectedTest ? (
-              <>
-                <div className="p-6 border-b border-gray-100 flex flex-wrap gap-4 items-center justify-between bg-white sticky top-0 z-10">
-                  <div>
-                    <h2 className="text-2xl font-black text-gray-900">{selectedTest.name}</h2>
-                    <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
-                      <span className="font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md">{selectedTest.code}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1.5"><Clock size={14}/> {selectedTest.date} {selectedTest.time}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-bold transition shadow-sm">
-                      <Printer size={16} /> In
-                    </button>
-                    {(selectedTest.status === 'Có kết quả' || selectedTest.status === 'Bác sĩ đã xác nhận') && (
-                      <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-sm shadow-indigo-200">
-                        <Download size={16} /> Tải PDF
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar bg-gray-50/30">
-                  <div className="max-w-4xl mx-auto space-y-8">
-                    
-                    {/* INFO BOX */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Loại xét nghiệm</p>
-                        <p className="font-bold text-gray-900 flex items-center gap-2">
-                          {getTypeIcon(selectedTest.type)} {selectedTest.type}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Bác sĩ chỉ định</p>
-                        <p className="font-bold text-gray-900">{selectedTest.doctor}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${getStatusConfig(selectedTest.status).bg} ${getStatusConfig(selectedTest.status).color}`}>
-                          {getStatusConfig(selectedTest.status).icon} {selectedTest.status}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* INDICATORS TABLE (If any) */}
-                    {selectedTest.indicators && selectedTest.indicators.length > 0 && (
-                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                          <h3 className="font-black text-gray-900 flex items-center gap-2">
-                            <Activity size={18} className="text-indigo-500" /> Kết quả đo lường
-                          </h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50/30 text-gray-500 border-b border-gray-100">
-                              <tr>
-                                <th className="px-6 py-3 font-semibold w-1/4">Tên chỉ số</th>
-                                <th className="px-6 py-3 font-semibold text-center">Kết quả</th>
-                                <th className="px-6 py-3 font-semibold text-center">Đơn vị</th>
-                                <th className="px-6 py-3 font-semibold text-center">Khoảng tham chiếu</th>
-                                <th className="px-6 py-3 font-semibold text-right">Đánh giá</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                              {selectedTest.indicators.map((ind: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                  <td className="px-6 py-4 font-bold text-gray-900">{ind.name}</td>
-                                  <td className={`px-6 py-4 font-black text-center text-lg ${ind.isAbnormal ? 'text-red-600' : 'text-gray-900'}`}>
-                                    {ind.result}
-                                  </td>
-                                  <td className="px-6 py-4 text-gray-600 text-center">{ind.unit}</td>
-                                  <td className="px-6 py-4 text-gray-500 text-center">{ind.reference}</td>
-                                  <td className="px-6 py-4 text-right">
-                                    {ind.isAbnormal ? (
-                                      <span className="inline-flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100">
-                                        <AlertCircle size={12} /> Bất thường
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-md border border-green-100">
-                                        <CheckCircle2 size={12} /> Bình thường
-                                      </span>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* CONCLUSION & NOTES */}
-                    {(selectedTest.conclusion || selectedTest.doctorNotes) ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {selectedTest.conclusion && (
-                          <div className="bg-indigo-50/50 rounded-2xl p-6 border border-indigo-100/50 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-100 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
-                            <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                              <FileText size={18} className="text-indigo-600" /> Kết luận
-                            </h3>
-                            <p className="text-gray-700 leading-relaxed font-medium relative z-10">
-                              {selectedTest.conclusion}
-                            </p>
-                          </div>
-                        )}
-                        {selectedTest.doctorNotes && (
-                          <div className="bg-amber-50/50 rounded-2xl p-6 border border-amber-100/50 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-100 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
-                            <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
-                              <Stethoscope size={18} className="text-amber-600" /> Nhận xét của Bác sĩ
-                            </h3>
-                            <p className="text-gray-700 leading-relaxed font-medium relative z-10">
-                              {selectedTest.doctorNotes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      selectedTest.status !== 'Có kết quả' && selectedTest.status !== 'Bác sĩ đã xác nhận' && (
-                        <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                            <Clock size={32} className="text-gray-400" />
-                          </div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">Đang chờ kết quả</h3>
-                          <p className="text-gray-500 text-sm max-w-sm">
-                            Xét nghiệm này đang trong quá trình thực hiện. Kết quả sẽ được cập nhật tại đây ngay khi có.
-                          </p>
-                        </div>
-                      )
-                    )}
-
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                  <Beaker size={40} className="text-gray-300" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Chưa chọn xét nghiệm</h3>
-                <p className="text-gray-500 text-sm max-w-sm">
-                  Vui lòng chọn một xét nghiệm từ danh sách bên trái để xem chi tiết kết quả.
-                </p>
-              </div>
-            )}
           </div>
 
         </div>

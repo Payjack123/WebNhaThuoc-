@@ -47,10 +47,11 @@ export default function PatientRecordsPage() {
     currentMedications,
     allergies,
     chronicDiseases,
+    recentLabs,
   } = data;
 
   const displayChronicDiseases = chronicDiseases || [];
-  const displayVisitHistory = visitHistory || [];
+  const displayVisitHistory = (visitHistory || []).slice(0, 4);
 
   return (
     <div className="min-h-screen flex bg-[#F8FAFC] font-sans text-gray-800 overflow-hidden">
@@ -61,15 +62,11 @@ export default function PatientRecordsPage() {
         
         {/* TOP HEADER */}
         <header className="h-20 bg-white border-b border-gray-100 px-8 flex items-center justify-between shrink-0 sticky top-0 z-10">
-          <div className="flex-1 max-w-xl">
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Tìm kiếm..." 
-                className="w-full pl-10 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
-            </div>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              Hồ sơ sức khỏe <ShieldCheck size={20} className="text-blue-500"/>
+            </h1>
+            <p className="text-[13px] text-gray-500 mt-0.5">Quản lý thông tin sức khỏe cá nhân và tiền sử bệnh của bạn.</p>
           </div>
           <div className="flex items-center gap-6 ml-auto">
             <button className="relative text-gray-500 hover:text-blue-600 transition">
@@ -89,14 +86,6 @@ export default function PatientRecordsPage() {
         {/* SCROLLABLE CONTENT */}
         <div className="flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar space-y-6">
           
-          {/* TITLE */}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              Hồ sơ sức khỏe <ShieldCheck size={20} className="text-blue-500"/>
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý thông tin sức khỏe cá nhân và tiền sử bệnh của bạn.</p>
-          </div>
-
           {/* TOP ROW */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
@@ -116,9 +105,11 @@ export default function PatientRecordsPage() {
                     <p className="text-sm text-gray-600 flex items-center gap-3"><Phone size={16} className="text-gray-400"/> {patientInfo.phone}</p>
                     <p className="text-sm text-gray-600 flex items-center gap-3"><Mail size={16} className="text-gray-400"/> {patientInfo.email}</p>
                     <p className="text-sm text-gray-600 flex items-center gap-3"><MapPin size={16} className="text-gray-400"/> {patientInfo.address}</p>
+                    <p className="text-sm text-gray-600 flex items-center gap-3"><AlertCircle size={16} className="text-red-500"/> Dị ứng: <span className="font-medium text-red-500">{allergies?.length > 0 ? allergies.join(', ') : 'Không có'}</span></p>
                   </div>
                 </div>
               </div>
+
               <button className="w-full py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 transition-colors">
                 Cập nhật thông tin
               </button>
@@ -197,58 +188,47 @@ export default function PatientRecordsPage() {
           {/* MIDDLE ROW: LỊCH SỬ BỆNH, DỊ ỨNG & THUỐC */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            {/* TIỀN SỬ BỆNH */}
+            {/* KẾT QUẢ XÉT NGHIỆM */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col p-6">
               <div className="flex items-center gap-2 mb-6">
-                <ClipboardList size={20} className="text-blue-500"/>
-                <h3 className="font-bold text-gray-900 text-lg">Tiền sử bệnh</h3>
+                <Beaker size={20} className="text-blue-500"/>
+                <h3 className="font-bold text-gray-900 text-lg">Kết quả xét nghiệm</h3>
               </div>
               <div className="flex-1 overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="border-b border-gray-100 text-gray-500">
                     <tr>
-                      <th className="pb-3 font-semibold pr-4 w-1/3">Bệnh / Tình trạng</th>
-                      <th className="pb-3 font-semibold px-4 w-1/4">Thời gian</th>
-                      <th className="pb-3 font-semibold pl-4">Ghi chú</th>
+                      <th className="pb-3 font-semibold pr-4 w-1/3">Tên xét nghiệm</th>
+                      <th className="pb-3 font-semibold px-4 w-1/4">Ngày thực hiện</th>
+                      <th className="pb-3 font-semibold pl-4">Kết quả</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {displayChronicDiseases.map((d: any, i: number) => (
+                    {(recentLabs && recentLabs.length > 0 ? recentLabs : [
+                      { type: 'Tổng phân tích máu', date: '20/08/2026', result: 'Bình thường' },
+                      { type: 'Sinh hóa máu', date: '20/08/2026', result: 'Cần theo dõi' },
+                      { type: 'Siêu âm ổ bụng', date: '15/05/2026', result: 'Bình thường' }
+                    ]).map((lab: any, i: number) => (
                       <tr key={i}>
-                        <td className="py-4 font-bold text-gray-800 pr-4">{d.name}</td>
-                        <td className="py-4 text-gray-600 px-4">{d.year}</td>
-                        <td className="py-4 text-gray-600 pl-4">{d.status}</td>
+                        <td className="py-4 font-bold text-gray-800 pr-4">{lab.type}</td>
+                        <td className="py-4 text-gray-600 px-4">{lab.date}</td>
+                        <td className="py-4 text-gray-600 pl-4">
+                          <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${lab.result === 'Bình thường' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                            {lab.result}
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <button className="w-full mt-4 py-2 border border-gray-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors">
+              <Link href="/patient/test-results" className="w-full mt-4 py-2 border border-gray-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors flex items-center justify-center">
                 Xem tất cả
-              </button>
+              </Link>
             </div>
 
-            {/* DỊ ỨNG & THUỐC ĐANG SỬ DỤNG */}
+            {/* THUỐC ĐANG SỬ DỤNG */}
             <div className="flex flex-col gap-6">
-              {/* Dị ứng */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-1 flex flex-col">
-                <div className="flex items-center gap-2 mb-6">
-                  <AlertCircle size={20} className="text-red-500"/>
-                  <h3 className="font-bold text-gray-900 text-lg">Dị ứng</h3>
-                </div>
-                <div className="flex flex-wrap gap-3 mt-2">
-                  {allergies?.length > 0 ? (
-                    allergies.map((allergy: string, i: number) => (
-                      <span key={i} className="bg-red-50 text-red-500 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                        {allergy} <span className="text-red-300 font-normal cursor-pointer hover:text-red-500 transition-colors">x</span>
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-gray-500 font-medium">Không ghi nhận dị ứng</span>
-                  )}
-                </div>
-              </div>
-
               {/* Thuốc đang sử dụng */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-6">

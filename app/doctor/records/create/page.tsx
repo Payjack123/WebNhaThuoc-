@@ -162,7 +162,7 @@ function DoctorMedicalRecordCreateContent() {
             <div className="flex flex-col gap-6 h-full">
 
               {/* Thông tin bệnh nhân */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                 <h3 className="text-[11px] font-bold text-gray-600 mb-4 uppercase tracking-wider">Thông tin bệnh nhân</h3>
 
                 <div className="flex items-center gap-4 mb-6">
@@ -208,9 +208,9 @@ function DoctorMedicalRecordCreateContent() {
               </div>
 
               {/* Khám lâm sàng */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 relative flex flex-col flex-1">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative flex flex-col flex-1">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-3 uppercase tracking-wider">Khám lâm sàng</h3>
-                <textarea value={clinicalExam} onChange={e => setClinicalExam(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
+                <textarea value={clinicalExam} onChange={e => setClinicalExam(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
                 <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{clinicalExam.length}/2000</span>
               </div>
 
@@ -220,21 +220,21 @@ function DoctorMedicalRecordCreateContent() {
             <div className="flex flex-col gap-6 h-full">
 
               {/* Thông tin lần khám */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">Thông tin lần khám</h3>
 
                 <div className="grid grid-cols-3 gap-4 mb-5">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Ngày khám <span className="text-red-500">*</span></label>
-                    <input type="date" defaultValue="2026-08-20" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none" />
+                    <input type="date" defaultValue="2026-08-20" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Giờ khám <span className="text-red-500">*</span></label>
-                    <input type="time" defaultValue="08:30" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none" />
+                    <input type="time" defaultValue="08:30" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Phòng khám <span className="text-red-500">*</span></label>
-                    <select className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none appearance-none">
+                    <select className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none appearance-none">
                       <option>Phòng khám 2</option>
                       <option>Phòng khám 1</option>
                     </select>
@@ -243,55 +243,55 @@ function DoctorMedicalRecordCreateContent() {
 
                 <div className="mb-5 relative">
                   <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Lý do khám <span className="text-red-500">*</span></label>
-                  <textarea rows={2} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={reason} onChange={e => setReason(e.target.value)}></textarea>
+                  <textarea rows={2} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={reason} onChange={e => setReason(e.target.value)}></textarea>
                   <span className="absolute bottom-2 right-2 text-[10px] text-gray-400">36/255</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="relative">
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Bệnh sử</label>
-                    <textarea rows={3} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={symptoms} onChange={e => setSymptoms(e.target.value)}></textarea>
+                    <textarea rows={3} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={symptoms} onChange={e => setSymptoms(e.target.value)}></textarea>
                     <span className="absolute bottom-2 right-2 text-[10px] text-gray-400">{symptoms.length}/1000</span>
                   </div>
                   <div className="relative">
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Tiền sử bệnh</label>
-                    <textarea rows={3} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={medicalHistory} onChange={e => setMedicalHistory(e.target.value)}></textarea>
+                    <textarea rows={3} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={medicalHistory} onChange={e => setMedicalHistory(e.target.value)}></textarea>
                     <span className="absolute bottom-2 right-2 text-[10px] text-gray-400">{medicalHistory.length}/1000</span>
                   </div>
                 </div>
               </div>
 
               {/* Dấu hiệu sinh tồn */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">Dấu hiệu sinh tồn</h3>
                 <div className="grid grid-cols-4 gap-3 text-center">
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Huyết áp (mmHg) <span className="text-red-500">*</span></label>
-                    <input type="text" value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="VD: 120/80" className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} placeholder="VD: 120/80" className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Nhịp tim (lần/phút) <span className="text-red-500">*</span></label>
-                    <input type="text" value={heartRate} onChange={e => setHeartRate(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={heartRate} onChange={e => setHeartRate(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Nhịp thở (lần/phút)</label>
-                    <input type="text" value={respiratoryRate} onChange={e => setRespiratoryRate(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={respiratoryRate} onChange={e => setRespiratoryRate(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Nhiệt độ (°C)</label>
-                    <input type="text" value={temperature} onChange={e => setTemperature(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={temperature} onChange={e => setTemperature(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">SpO2 (%)</label>
-                    <input type="text" value={spO2} onChange={e => setSpO2(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={spO2} onChange={e => setSpO2(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Cân nặng (kg)</label>
-                    <input type="text" value={weight} onChange={e => setWeight(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={weight} onChange={e => setWeight(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">Chiều cao (cm)</label>
-                    <input type="text" value={height} onChange={e => setHeight(e.target.value)} className="w-full py-2 text-center bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                    <input type="text" value={height} onChange={e => setHeight(e.target.value)} className="w-full py-2 text-center bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 mb-1.5">BMI</label>
@@ -301,9 +301,9 @@ function DoctorMedicalRecordCreateContent() {
               </div>
 
               {/* Ghi chú của bác sĩ */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 relative flex flex-col flex-1">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative flex flex-col flex-1">
                 <h3 className="text-[11px] font-bold text-gray-700 mb-3 uppercase tracking-wider">Ghi chú của bác sĩ <span className="text-gray-400 font-normal lowercase tracking-normal">(không bắt buộc)</span></h3>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập ghi chú thêm nếu cần..." className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập ghi chú thêm nếu cần..." className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1"></textarea>
                 <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{notes.length}/1000</span>
               </div>
 
@@ -313,7 +313,7 @@ function DoctorMedicalRecordCreateContent() {
             <div className="flex flex-col gap-6 h-full">
 
               {/* Chẩn đoán */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">Chẩn đoán</h3>
 
                 <div className="space-y-5">
@@ -321,7 +321,7 @@ function DoctorMedicalRecordCreateContent() {
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Chẩn đoán chính <span className="text-red-500">*</span></label>
                     <div className="relative flex items-center">
                       <Search className="absolute left-3 text-gray-400" size={14} />
-                      <input type="text" value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="Nhập chẩn đoán" className="w-full pl-8 pr-16 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                      <input type="text" value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="Nhập chẩn đoán" className="w-full pl-8 pr-16 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                       <div className="absolute right-2 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-bold text-gray-600 flex items-center gap-0.5">
                         I10 <ChevronRight size={10} className="text-gray-400" />
                       </div>
@@ -332,7 +332,7 @@ function DoctorMedicalRecordCreateContent() {
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Chẩn đoán phụ</label>
                     <div className="relative flex items-center">
                       <Search className="absolute left-3 text-gray-400" size={14} />
-                      <input type="text" value={secondaryDiagnosis} onChange={e => setSecondaryDiagnosis(e.target.value)} placeholder="Nhập chẩn đoán phụ (không bắt buộc)" className="w-full pl-8 pr-16 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:border-[#2563EB] outline-none" />
+                      <input type="text" value={secondaryDiagnosis} onChange={e => setSecondaryDiagnosis(e.target.value)} placeholder="Nhập chẩn đoán phụ (không bắt buộc)" className="w-full pl-8 pr-16 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white font-medium focus:border-[#2563EB] outline-none" />
                       <div className="absolute right-2 px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-bold text-gray-600 flex items-center gap-0.5">
                         F41.1 <ChevronRight size={10} className="text-gray-400" />
                       </div>
@@ -341,36 +341,36 @@ function DoctorMedicalRecordCreateContent() {
 
                   <div className="relative pt-2">
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Kết luận</label>
-                    <textarea rows={4} className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập kết luận"></textarea>
+                    <textarea rows={4} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Nhập kết luận"></textarea>
                     <span className="absolute bottom-2 right-2 text-[10px] text-gray-400">{notes.length}/1000</span>
                   </div>
                 </div>
               </div>
 
               {/* Kế hoạch điều trị */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 relative flex flex-col flex-1">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative flex flex-col flex-1">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">Kế hoạch điều trị</h3>
                 <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Hướng điều trị</label>
-                <textarea className="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1" value={treatment} onChange={e => setTreatment(e.target.value)} placeholder="Hướng điều trị"></textarea>
+                <textarea className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none resize-none leading-relaxed text-gray-800 flex-1" value={treatment} onChange={e => setTreatment(e.target.value)} placeholder="Hướng điều trị"></textarea>
                 <span className="absolute bottom-7 right-7 text-[10px] text-gray-400">{treatment.length}/1000</span>
               </div>
 
               {/* Hẹn tái khám */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5">
                 <h3 className="text-[11px] font-bold text-[#2563EB] mb-4 uppercase tracking-wider">Hẹn tái khám</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Ngày tái khám</label>
-                    <input type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none" />
+                    <input type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Giờ</label>
-                    <input type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none" />
+                    <input type="time" value={followUpTime} onChange={e => setFollowUpTime(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-gray-600 mb-1.5">Lý do tái khám</label>
-                  <input type="text" value={followUpReason} onChange={e => setFollowUpReason(e.target.value)} placeholder="Lý do tái khám" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] focus:border-[#2563EB] outline-none text-gray-800" />
+                  <input type="text" value={followUpReason} onChange={e => setFollowUpReason(e.target.value)} placeholder="Lý do tái khám" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[13px] hover:bg-white hover:border-gray-200 focus:bg-white focus:border-[#2563EB] outline-none text-gray-800" />
                 </div>
               </div>
 
@@ -392,7 +392,7 @@ function DoctorMedicalRecordCreateContent() {
             <button onClick={() => router.back()} className="flex items-center gap-1.5 px-5 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors">
               <ArrowLeft size={16} /> Quay lại
             </button>
-            <button onClick={handleSave} disabled={isSubmitting} className="flex items-center gap-1.5 px-6 py-2 bg-[#2563EB] text-white rounded-lg text-[13px] font-bold hover:bg-blue-700 transition-colors disabled:opacity-70">
+            <button onClick={handleSave} disabled={isSubmitting} className="flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-blue-600 to-[#2563EB] text-white rounded-xl shadow-md hover:shadow-lg hover:shadow-blue-500/20 text-[13px] font-bold hover:bg-blue-700 transition-colors disabled:opacity-70">
               {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save size={16} />}
               {isSubmitting ? 'Đang lưu...' : 'Lưu bệnh án'}
             </button>

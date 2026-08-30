@@ -498,9 +498,8 @@ export default function TestResultsPage() {
                             rows={6}
                             value={doctorNote}
                             onChange={(e) => setDoctorNote(e.target.value)}
-                            disabled={selectedResult.status === 'evaluated'}
                             placeholder="Nhập nhận xét, đánh giá của bác sĩ về kết quả này..."
-                            className={`w-full p-4 border border-gray-300 rounded-xl text-sm text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm flex-1 ${selectedResult.status === 'evaluated' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                            className="w-full p-4 border border-gray-300 rounded-xl text-sm text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm flex-1 bg-white"
                           ></textarea>
                           
                           {/* Save Action */}
