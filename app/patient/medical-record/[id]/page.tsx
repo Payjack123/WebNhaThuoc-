@@ -25,11 +25,11 @@ export default function PatientMedicalRecordDetailPage() {
       if (!recordId) return;
       
       setIsLoading(true);
-      const res = await getMedicalRecordById(recordId);
-      if (res.success && res.data) {
+      const res: any = await getMedicalRecordById(recordId);
+      if (res && res.success && res.data) {
         setRecord(res.data);
       } else {
-        setError(res.message || 'Không thể tải hồ sơ');
+        setError(res?.message || 'Không thể tải hồ sơ');
       }
       setIsLoading(false);
     };
@@ -170,15 +170,40 @@ export default function PatientMedicalRecordDetailPage() {
                     ))}
                   </div>
                 </div>
-                
+              </div>
+            </section>
+
+            {/* KẾ HOẠCH TÁI KHÁM */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="bg-blue-50/50 px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                  <Calendar size={20} className="text-blue-500" /> KẾ HOẠCH TÁI KHÁM
+                </h2>
+              </div>
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xs text-gray-500 font-medium mb-1">Lịch tái khám</p>
-                  <p className="font-bold text-gray-900">{record.followUp}</p>
+                  <p className="text-xs text-gray-500 font-medium mb-1.5">Thời gian tái khám</p>
+                  <p className="text-lg font-black text-blue-700">
+                    {record.followUpDate ? `${record.followUpTime ? record.followUpTime + ' - ' : ''}${record.followUpDate.includes('-') ? record.followUpDate.split('-').reverse().join('/') : record.followUpDate}` : 'Không có hẹn tái khám'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium mb-1">Tình trạng theo dõi</p>
-                  <p className="font-bold text-gray-900">{record.status}</p>
+                  <p className="text-xs text-gray-500 font-medium mb-1.5">Trạng thái hồ sơ</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold ${record.status === 'Hoàn thành' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-orange-50 text-orange-700 border border-orange-200'}`}>
+                      {record.status === 'Hoàn thành' ? <CheckCircle2 size={16}/> : <Clock size={16}/>} 
+                      {record.status}
+                    </span>
+                  </div>
                 </div>
+                {record.followUpReason && (
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-gray-500 font-medium mb-1.5">Lý do tái khám / Lời dặn</p>
+                    <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 text-sm font-medium text-blue-900">
+                      {record.followUpReason}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 

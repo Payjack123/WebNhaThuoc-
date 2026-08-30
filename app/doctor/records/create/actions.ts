@@ -47,6 +47,13 @@ export async function getInitialCreateData(patientId: number) {
       }
     }
 
+    let extractedReason = appointment?.reason || '';
+    if (extractedReason.includes('Lý do: ')) {
+      extractedReason = extractedReason.split('Lý do: ')[1].trim();
+    } else if (extractedReason.includes('Lý do khám: ')) {
+      extractedReason = extractedReason.split('Lý do khám: ')[1].trim();
+    }
+
     return {
       success: true,
       data: {
@@ -70,7 +77,7 @@ export async function getInitialCreateData(patientId: number) {
         },
         appointment: appointment ? {
           id: appointment.id,
-          reason: appointment.reason || ''
+          reason: extractedReason
         } : null,
         latestExamination: latestExamination ? {
           symptoms: latestExamination.symptoms || '',
@@ -169,7 +176,10 @@ export async function createDoctorMedicalRecord(data: any) {
     if (appointmentId) {
       await prisma.appointment.update({
         where: { id: appointmentId },
-        data: { status: 'HOÀN THÀNH' }
+        data: { 
+          status: 'HOÀN THÀNH',
+          reason: reason
+        }
       });
     }
 

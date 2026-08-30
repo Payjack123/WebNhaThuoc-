@@ -126,6 +126,24 @@ export async function getTestResults() {
         doctorNotes = lab.notes || '';
       }
 
+      let testsDetail = null;
+      try {
+        if ((lab as any).testsDetail) {
+          testsDetail = typeof (lab as any).testsDetail === 'string' ? JSON.parse((lab as any).testsDetail) : (lab as any).testsDetail;
+        }
+      } catch (e) {}
+      
+      if (!testsDetail || testsDetail.length === 0) {
+        if (parsedNotes && parsedNotes.testsDetail) {
+          testsDetail = parsedNotes.testsDetail;
+        }
+      }
+
+      let totalPrice = 0;
+      if (testsDetail && Array.isArray(testsDetail)) {
+        totalPrice = testsDetail.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+      }
+
       return {
         id: lab.id,
         code: `XN${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2, '0')}-${lab.id.toString().padStart(4, '0')}`,
@@ -139,6 +157,8 @@ export async function getTestResults() {
         conclusion: conclusion,
         doctorNotes: doctorNotes,
         pdfUrl: '#',
+        testsDetail: testsDetail,
+        totalPrice: totalPrice,
       };
     });
 

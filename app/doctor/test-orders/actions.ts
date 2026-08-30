@@ -15,7 +15,7 @@ export async function getTestOrders() {
     });
 
     const formattedOrders = labTests.map((order) => {
-      let notesData = { priority: "normal", reason: "", instructions: "" };
+      let notesData: any = { priority: "normal", reason: "", instructions: "" };
       try {
         if (order.notes) {
           notesData = JSON.parse(order.notes);
@@ -46,7 +46,11 @@ export async function getTestOrders() {
         time: `${order.date.getHours().toString().padStart(2, '0')}:${order.date.getMinutes().toString().padStart(2, '0')}`,
         dateFilterStr: order.date.toISOString().split('T')[0],
         doctor: order.doctorName,
-        tests: order.testName ? order.testName.split(", ") : [],
+        tests: (order as any).testsDetail && Array.isArray((order as any).testsDetail) && (order as any).testsDetail.length > 0
+          ? (order as any).testsDetail.map((t: any) => t.name)
+          : (notesData.testsDetail && Array.isArray(notesData.testsDetail) && notesData.testsDetail.length > 0
+              ? notesData.testsDetail.map((t: any) => t.name)
+              : (order.testName ? order.testName.split(", ") : [])),
         priority: notesData.priority || "normal",
         reason: notesData.reason || "",
         instructions: notesData.instructions || "",
@@ -193,6 +197,7 @@ export async function createTestOrder(data: {
         doctorName: data.doctorName,
         result: "Chờ cập nhật", // Default result
         statusType: data.status,
+        testsDetail: data.tests,
         notes: notesJson,
       }
     });

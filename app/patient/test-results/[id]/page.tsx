@@ -129,7 +129,7 @@ export default function TestResultDetailPage() {
                   <div className="max-w-4xl mx-auto space-y-8">
                     
                     {/* INFO BOX */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Loại xét nghiệm</p>
                         <p className="font-bold text-gray-900 flex items-center gap-2">
@@ -146,7 +146,52 @@ export default function TestResultDetailPage() {
                           {getStatusConfig(testData.status).icon} {testData.status}
                         </div>
                       </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Thành tiền</p>
+                        <p className="font-black text-indigo-700 text-lg">
+                          {testData.totalPrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(testData.totalPrice) : 'Miễn phí'}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* CHI TIẾT DỊCH VỤ */}
+                    {testData.testsDetail && testData.testsDetail.length > 0 && (
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                          <h3 className="font-black text-gray-900 flex items-center gap-2">
+                            <FileText size={18} className="text-indigo-500" /> Chi tiết dịch vụ xét nghiệm
+                          </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50/30 text-gray-500 border-b border-gray-100">
+                              <tr>
+                                <th className="px-6 py-3 font-semibold">Tên dịch vụ</th>
+                                <th className="px-6 py-3 font-semibold text-right">Đơn giá</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                              {testData.testsDetail.map((item: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                  <td className="px-6 py-4 font-bold text-gray-900">{item.name}</td>
+                                  <td className="px-6 py-4 text-right font-semibold text-gray-700">
+                                    {item.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price) : 'Miễn phí'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot className="bg-gray-50/50">
+                              <tr>
+                                <td className="px-6 py-4 font-black text-gray-900 text-right">Tổng cộng:</td>
+                                <td className="px-6 py-4 font-black text-indigo-700 text-right text-lg">
+                                  {testData.totalPrice ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(testData.totalPrice) : 'Miễn phí'}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    )}
 
                     {/* INDICATORS TABLE */}
                     {testData.indicators && testData.indicators.length > 0 && (

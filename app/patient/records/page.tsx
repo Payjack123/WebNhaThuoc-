@@ -189,40 +189,36 @@ export default function PatientRecordsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* KẾT QUẢ XÉT NGHIỆM */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col p-6 h-full">
               <div className="flex items-center gap-2 mb-6">
                 <Beaker size={20} className="text-blue-500"/>
                 <h3 className="font-bold text-gray-900 text-lg">Kết quả xét nghiệm</h3>
               </div>
-              <div className="flex-1 overflow-x-auto">
-                <table className="w-full text-left text-sm whitespace-nowrap">
-                  <thead className="border-b border-gray-100 text-gray-500">
-                    <tr>
-                      <th className="pb-3 font-semibold pr-4 w-1/3">Tên xét nghiệm</th>
-                      <th className="pb-3 font-semibold px-4 w-1/4">Ngày thực hiện</th>
-                      <th className="pb-3 font-semibold pl-4">Kết quả</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {(recentLabs && recentLabs.length > 0 ? recentLabs : [
-                      { type: 'Tổng phân tích máu', date: '20/08/2026', result: 'Bình thường' },
-                      { type: 'Sinh hóa máu', date: '20/08/2026', result: 'Cần theo dõi' },
-                      { type: 'Siêu âm ổ bụng', date: '15/05/2026', result: 'Bình thường' }
-                    ]).map((lab: any, i: number) => (
-                      <tr key={i}>
-                        <td className="py-4 font-bold text-gray-800 pr-4">{lab.type}</td>
-                        <td className="py-4 text-gray-600 px-4">{lab.date}</td>
-                        <td className="py-4 text-gray-600 pl-4">
-                          <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${lab.result === 'Bình thường' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
-                            {lab.result}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="space-y-3">
+                  {(recentLabs && recentLabs.length > 0 ? recentLabs : [
+                    { type: 'Tổng phân tích máu', date: '20/08/2026', result: 'Bình thường' },
+                    { type: 'Sinh hóa máu', date: '20/08/2026', result: 'Cần theo dõi' },
+                    { type: 'Siêu âm ổ bụng', date: '15/05/2026', result: 'Bình thường' }
+                  ]).map((lab: any, i: number) => (
+                    <div key={i} className="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:shadow-md hover:border-blue-100 hover:bg-blue-50/20 transition-all cursor-pointer group">
+                      <div className={`p-2.5 rounded-xl shrink-0 ${lab.result === 'Bình thường' ? 'bg-green-50 text-green-600 group-hover:bg-green-100' : 'bg-orange-50 text-orange-600 group-hover:bg-orange-100'} transition-colors`}>
+                        <FileText size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors" title={lab.type}>{lab.type}</p>
+                        <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5"><Calendar size={13} className="text-gray-400"/> {lab.date}</p>
+                      </div>
+                      <div className="shrink-0 pt-0.5">
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide border ${lab.result === 'Bình thường' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                          {lab.result}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Link href="/patient/test-results" className="w-full mt-4 py-2 border border-gray-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors flex items-center justify-center">
+              <Link href="/patient/test-results" className="w-full mt-6 py-2.5 border border-gray-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 hover:border-blue-200 transition-all flex items-center justify-center gap-1.5 shadow-sm">
                 Xem tất cả
               </Link>
             </div>

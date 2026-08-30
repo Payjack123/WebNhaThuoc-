@@ -78,7 +78,7 @@ export default function TestResultsPage() {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!res.patientName.toLowerCase().includes(q) && 
-          !res.patientProfile?.patientCode.toLowerCase().includes(q) &&
+          !res.patientCode.toLowerCase().includes(q) &&
           !res.id.toLowerCase().includes(q)) {
         return false;
       }
@@ -189,7 +189,7 @@ export default function TestResultsPage() {
                               <div className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
                                 {res.patientName}
                               </div>
-                              <div className="text-xs text-gray-500">{res.patientProfile?.patientCode}</div>
+                              <div className="text-xs text-gray-500">{res.patientCode}</div>
                             </div>
                           </div>
                         </td>
@@ -332,14 +332,14 @@ export default function TestResultsPage() {
                         )}
                         <div>
                           <p className="text-lg font-black text-gray-900">{selectedResult.patientName}</p>
-                          <p className="text-sm text-gray-600 font-medium">{selectedResult.patientProfile?.patientCode}</p>
+                          <p className="text-sm text-gray-600 font-medium">{selectedResult.patientCode}</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-y-3 text-sm">
                         <div><span className="text-gray-500">Ngày sinh:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.dob}</span></div>
                         <div><span className="text-gray-500">Giới tính:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.gender}</span></div>
                         <div><span className="text-gray-500">Số điện thoại:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.phone}</span></div>
-                        <div><span className="text-gray-500">CCCD:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.patientProfile?.cccd}</span></div>
+                        <div><span className="text-gray-500">CCCD:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.cccd}</span></div>
                         <div className="col-span-2"><span className="text-gray-500">Địa chỉ:</span> <span className="font-bold text-gray-900 ml-1">{selectedResult.address}</span></div>
                       </div>
                     </div>

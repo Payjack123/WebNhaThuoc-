@@ -177,6 +177,7 @@ model LabTest {
   doctorName String
   result     String
   statusType String
+  testsDetail Json?
   notes      String?  @db.Text
   patient    User     @relation(fields: [patientId], references: [id])
 

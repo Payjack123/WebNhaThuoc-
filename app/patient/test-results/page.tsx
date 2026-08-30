@@ -137,34 +137,35 @@ export default function TestResultsPage() {
               {isLoading ? (
                 <div className="flex justify-center p-8"><Activity className="animate-spin text-indigo-500" /></div>
               ) : filteredData.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-4">
                 {filteredData.map(test => {
                   const statusConfig = getStatusConfig(test.status);
                   return (
                     <div 
                       key={test.id}
-                      className="p-5 rounded-2xl transition-all border bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md flex flex-col justify-between"
+                      className="p-5 rounded-2xl transition-all border bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4"
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex gap-3">
-                          <div className="p-3 rounded-xl bg-indigo-50 shadow-sm border border-indigo-100/50 text-indigo-600">
-                            {getTypeIcon(test.type)}
-                          </div>
-                          <div>
-                            <h3 className="text-base font-bold text-gray-900">{test.name}</h3>
-                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5"><Clock size={12}/> {test.date} • {test.time}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="p-3.5 rounded-xl bg-indigo-50 shadow-sm border border-indigo-100/50 text-indigo-600 shrink-0">
+                          {getTypeIcon(test.type)}
+                        </div>
+                        <div>
+                          <h3 className="text-[15px] font-bold text-gray-900">{test.name}</h3>
+                          <div className="flex items-center gap-4 mt-1.5">
+                            <p className="text-xs text-gray-500 flex items-center gap-1.5"><Clock size={12} className="text-gray-400"/> {test.date} • {test.time}</p>
+                            <span className="text-[11px] font-bold text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded uppercase tracking-wider">{test.code}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                        <span className="text-xs font-semibold text-gray-500">{test.code}</span>
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold ${statusConfig.bg} ${statusConfig.color}`}>
+                      
+                      <div className="flex items-center gap-3 md:ml-auto w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                        <div className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-bold ${statusConfig.bg} ${statusConfig.color} flex-1 md:flex-none border border-transparent`}>
                           {statusConfig.icon} {test.status}
                         </div>
+                        <Link href={`/patient/test-results/${test.id}`} className="px-5 py-2 bg-indigo-50 border border-indigo-100 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl text-[13px] font-bold transition-colors text-center shrink-0 shadow-sm">
+                          Xem chi tiết
+                        </Link>
                       </div>
-                      <Link href={`/patient/test-results/${test.id}`} className="mt-4 w-full py-2.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl text-sm font-bold transition-colors text-center block">
-                        Xem chi tiết
-                      </Link>
                     </div>
                   );
                 })}

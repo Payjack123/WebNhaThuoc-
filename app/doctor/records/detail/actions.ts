@@ -54,6 +54,13 @@ export async function getDoctorMedicalRecordById(recordId: number) {
     const examDateStr = new Date(record.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const examTimeStr = new Date(record.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
+      let extractedReason = (record as any).appointment?.reason || 'Khám tổng quát';
+      if (extractedReason.includes('Lý do: ')) {
+        extractedReason = extractedReason.split('Lý do: ')[1].trim();
+      } else if (extractedReason.includes('Lý do khám: ')) {
+        extractedReason = extractedReason.split('Lý do khám: ')[1].trim();
+      }
+
     const formattedRecord = {
       id: record.id,
       baCode: `BA-${new Date(record.createdAt).getFullYear().toString().slice(2)}${String(new Date(record.createdAt).getMonth() + 1).padStart(2, '0')}-${record.id.toString().padStart(3, '0')}`,
@@ -73,7 +80,7 @@ export async function getDoctorMedicalRecordById(recordId: number) {
       time: examTimeStr,
       doctor: (record as any).doctor.fullName,
       doctorSpecialty: (record as any).doctor.doctorProfile?.specialty || 'Đa khoa',
-      reason: (record as any).appointment?.reason || 'Khám tổng quát',
+      reason: extractedReason,
       symptoms: record.symptoms || 'Không có ghi nhận',
       clinicalExam: (record as any).clinicalExam || 'Không có ghi nhận',
       diagnosis: record.diagnosis || 'Đang chờ chẩn đoán',

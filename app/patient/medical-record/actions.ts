@@ -88,6 +88,14 @@ export async function getMedicalRecordById(recordId: number) {
         treatmentStr = exam.treatment || 'Chưa có thông tin điều trị';
     }
 
+      let extractedReason = exam.appointment?.reason || 'Không ghi nhận';
+      if (extractedReason.includes('Lý do: ')) {
+        extractedReason = extractedReason.split('Lý do: ')[1].trim();
+      } else if (extractedReason.includes('Lý do khám: ')) {
+        extractedReason = extractedReason.split('Lý do khám: ')[1].trim();
+      }
+      if (!extractedReason) extractedReason = 'Không ghi nhận';
+
     const detail = {
       id: exam.id,
       code: exam.appointment?.id ? `HSBA${exam.appointment.id.toString().padStart(6, '0')}` : `HSBA${exam.id.toString().padStart(6, '0')}`,
@@ -97,19 +105,23 @@ export async function getMedicalRecordById(recordId: number) {
       date: `${exam.createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${exam.createdAt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`,
       doctorName: exam.doctor ? `BS. ${exam.doctor.fullName}` : 'Chưa cập nhật',
       specialty: exam.doctor?.doctorProfile?.specialty || 'Khám bệnh',
-      reason: exam.appointment?.reason || 'Không ghi nhận',
+      reason: extractedReason,
       symptoms: exam.symptoms || 'Không ghi nhận', // Bệnh sử
       medicalHistory: exam.medicalHistory || exam.patient?.healthMetric?.medicalHistory || 'Không có tiền sử bệnh lý', // Tiền sử bệnh
       
       // CHẨN ĐOÁN
       primaryDiagnosis: exam.diagnosis || 'Chưa chẩn đoán',
-      secondaryDiagnosis: 'Không có', // Có thể tách từ diagnosis hoặc thêm cột sau
+      secondaryDiagnosis: exam.secondaryDiagnosis || 'Không có',
       conclusion: notesStr,
 
       // ĐIỀU TRỊ
       treatment: treatmentStr,
       prescriptionId: examPrescription?.id || null,
-      followUp: 'Tái khám sau 7 ngày' // Tạm thời hardcode vì chưa có trường lịch tái khám trong db
+      
+      // TÁI KHÁM
+      followUpDate: exam.followUpDate || null,
+      followUpTime: exam.followUpTime || null,
+      followUpReason: exam.followUpReason || null
     };
 
     return {
