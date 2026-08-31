@@ -27,14 +27,19 @@ export default function CreatePrescriptionPage() {
   const [diagnosis, setDiagnosis] = useState('');
   const [symptoms, setSymptoms] = useState(''); // Triệu chứng
   const [treatment, setTreatment] = useState(''); // Hướng điều trị
-  const [notes, setNotes] = useState(''); // Lời dặn
+  const [examNotes, setExamNotes] = useState(''); // Ghi chú khám
+  const [patientInstructions, setPatientInstructions] = useState(''); // Hướng dẫn cho bệnh nhân
   const [type, setType] = useState('Ngoại trú');
   const [followUpDate, setFollowUpDate] = useState('');
+  
+  const [searchPatientCode, setSearchPatientCode] = useState('');
+  const [searchError, setSearchError] = useState('');
   
   const [items, setItems] = useState<any[]>([]);
   const [drugForm, setDrugForm] = useState({ name: '', dosage: '', quantity: '', form: 'Viên', usage: '' });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExamModal, setShowExamModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,14 +65,34 @@ export default function CreatePrescriptionPage() {
       setSymptoms(exam.symptoms || '');
       setDiagnosis(exam.diagnosis || '');
       setTreatment(exam.treatment || '');
-      setNotes(exam.notes || '');
+      setExamNotes(exam.notes || '');
     } else {
       setSymptoms('');
       setDiagnosis('');
       setTreatment('');
-      setNotes('');
+      setExamNotes('');
     }
   }, [activePatient]);
+
+  const handleSearchPatient = () => {
+     setSearchError('');
+     if (!searchPatientCode.trim()) {
+         setSearchError('Vui lòng nhập mã bệnh nhân');
+         return;
+     }
+     
+     const found = data?.patients?.find((p: any) => {
+        const exactCode = p.patientProfile?.patientCode || `BN${p.id}`;
+        return exactCode === searchPatientCode.trim();
+     });
+
+     if (found) {
+        setSelectedPatientId(found.id.toString());
+     } else {
+        setSelectedPatientId('');
+        setSearchError('Không tìm thấy bệnh nhân với mã này');
+     }
+  };
 
   const handleAddDrug = () => {
     if (!drugForm.name || !drugForm.quantity) return alert('Vui lòng nhập Tên thuốc và Số lượng!');
@@ -90,7 +115,7 @@ export default function CreatePrescriptionPage() {
       diagnosis,
       treatment,
       type,
-      notes,
+      notes: patientInstructions,
       followUpDate,
       items: items.map(i => ({
         name: i.name,
@@ -175,10 +200,23 @@ export default function CreatePrescriptionPage() {
                     </h2>
                     
                     <div className="mb-4">
-                       <select value={selectedPatientId} onChange={e => setSelectedPatientId(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-[#2563EB] font-medium text-gray-700">
-                           <option value="">-- Chọn bệnh nhân --</option>
-                           {data?.patients?.map((p: any) => <option key={p.id} value={p.id}>{p.fullName} ({p.patientCode || `BN${p.id}`})</option>)}
-                       </select>
+                       <div className="flex gap-2">
+                           <input 
+                              type="text" 
+                              value={searchPatientCode} 
+                              onChange={e => setSearchPatientCode(e.target.value)} 
+                              onKeyDown={e => e.key === 'Enter' && handleSearchPatient()}
+                              placeholder="Nhập mã bệnh nhân (VD: BN260001)..." 
+                              className="flex-1 p-3 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-[#2563EB] font-medium text-gray-700"
+                           />
+                           <button 
+                              onClick={handleSearchPatient}
+                              className="bg-[#2563EB] text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center"
+                           >
+                              <Search size={20} />
+                           </button>
+                       </div>
+                       {searchError && <p className="text-red-500 text-xs mt-2 font-medium">{searchError}</p>}
                     </div>
 
                     {activePatient ? (
@@ -190,12 +228,14 @@ export default function CreatePrescriptionPage() {
                                        {activePatient.fullName}
                                        {activePatient.gender === 'Nam' ? <span className="text-blue-500 text-lg">♂</span> : <span className="text-pink-500 text-lg">♀</span>}
                                    </h3>
-                                   <p className="text-sm text-gray-500">Mã bệnh nhân: <span className="font-medium text-gray-900">{activePatient.patientCode || `BN${activePatient.id}`}</span></p>
+                                   <p className="text-sm text-gray-500">Mã bệnh nhân: <span className="font-medium text-gray-900">{activePatient.patientProfile?.patientCode || `BN${activePatient.id}`}</span></p>
                                </div>
                            </div>
                            <div className="grid grid-cols-[80px_1fr] gap-y-3 text-sm mt-2">
                                <div className="text-gray-500">Ngày sinh:</div>
                                <div className="font-medium text-gray-900">{activePatient.dob || 'Chưa cập nhật'}</div>
+                               <div className="text-gray-500">CCCD:</div>
+                               <div className="font-medium text-gray-900">{activePatient.patientProfile?.cccd || 'Chưa cập nhật'}</div>
                                <div className="text-gray-500">SĐT:</div>
                                <div className="font-medium text-gray-900">{activePatient.phone || 'Chưa cập nhật'}</div>
                                <div className="text-gray-500">Địa chỉ:</div>
@@ -203,45 +243,13 @@ export default function CreatePrescriptionPage() {
                                <div className="text-gray-500">Dị ứng:</div>
                                <div className="font-medium text-red-600">{activePatient.healthMetric?.allergies || 'Không ghi nhận'}</div>
                            </div>
-                           <button className="text-[#2563EB] font-bold text-sm mt-2 hover:underline w-full text-center py-2 bg-blue-50 rounded-xl">Xem hồ sơ bệnh án</button>
+                           <button onClick={() => setShowExamModal(true)} className="text-[#2563EB] font-bold text-sm mt-2 hover:underline w-full text-center py-2 bg-blue-50 rounded-xl">Xem hồ sơ bệnh án</button>
                         </div>
                     ) : (
                         <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">
                             Vui lòng chọn bệnh nhân
                         </div>
                     )}
-                 </div>
-
-                 {/* Card Thông tin Khám */}
-                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
-                    <h2 className="text-lg font-bold text-gray-900 mb-5 flex justify-between items-center">
-                       Thông tin khám
-                       <Edit size={16} className="text-[#2563EB] cursor-pointer" />
-                    </h2>
-                    <div className="grid grid-cols-[90px_1fr] gap-y-4 text-sm">
-                       <div className="text-gray-500 pt-2">Ngày khám:</div>
-                       <div className="font-medium text-gray-900 pt-2">{formattedDate}</div>
-                       
-                       <div className="text-gray-500 pt-2">Triệu chứng:</div>
-                       <div>
-                           <input type="text" value={symptoms} onChange={e => setSymptoms(e.target.value)} placeholder="Đau đầu, mệt mỏi..." className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-[#2563EB]" />
-                       </div>
-                       
-                       <div className="text-gray-500 pt-2">Chẩn đoán:</div>
-                       <div>
-                           <input type="text" value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="Viêm họng cấp..." className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-[#2563EB] font-bold text-[#2563EB]" />
-                       </div>
-
-                       <div className="text-gray-500 pt-2">Điều trị:</div>
-                       <div>
-                           <input type="text" value={treatment} onChange={e => setTreatment(e.target.value)} placeholder="Nghỉ ngơi..." className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-[#2563EB]" />
-                       </div>
-                       
-                       <div className="text-gray-500 pt-2">Ghi chú:</div>
-                       <div>
-                           <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Uống nhiều nước..." className="w-full p-2 border border-gray-200 rounded-lg outline-none focus:border-[#2563EB] resize-none"></textarea>
-                       </div>
-                    </div>
                  </div>
 
                  {/* Card Đơn thuốc gần đây */}
@@ -390,12 +398,12 @@ export default function CreatePrescriptionPage() {
                               <div className="relative">
                                   <textarea 
                                     rows={5} 
-                                    value={notes}
-                                    onChange={e => setNotes(e.target.value)}
+                                    value={patientInstructions}
+                                    onChange={e => setPatientInstructions(e.target.value)}
                                     placeholder="- Uống thuốc đúng theo hướng dẫn.&#10;- Uống nhiều nước ấm..." 
                                     className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#2563EB] resize-none leading-relaxed"
                                   ></textarea>
-                                  <span className="absolute bottom-3 right-3 text-xs text-gray-400">{notes.length}/500</span>
+                                  <span className="absolute bottom-3 right-3 text-xs text-gray-400">{patientInstructions.length}/500</span>
                               </div>
                           </div>
                           <div>
@@ -425,9 +433,60 @@ export default function CreatePrescriptionPage() {
                   </div>
 
               </div>
-           </div>
-        </div>
+            </div>
+         </div>
       </main>
+
+      {/* Modal Thông tin khám (Hồ sơ bệnh án) */}
+      {showExamModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-[750px] rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                 <FileText className="text-[#2563EB]" size={22} />
+                 Thông tin khám
+              </h2>
+              <button onClick={() => setShowExamModal(false)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+                 <XCircle size={22} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5 text-sm">
+               <div className="flex items-center gap-2 bg-blue-50/50 p-3.5 rounded-xl border border-blue-100">
+                   <Clock size={18} className="text-[#2563EB]" />
+                   <span className="text-gray-600 font-medium">Ngày khám:</span>
+                   <span className="font-bold text-[#2563EB] text-base">{formattedDate}</span>
+               </div>
+               
+               <div>
+                   <label className="block text-gray-600 mb-1.5 font-bold">Triệu chứng:</label>
+                   <textarea value={symptoms} onChange={e => setSymptoms(e.target.value)} rows={3} placeholder="Đau đầu, mệt mỏi..." className="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#2563EB]/50 focus:border-[#2563EB] resize-none bg-gray-50 focus:bg-white transition-all"></textarea>
+               </div>
+               
+               <div>
+                   <label className="block text-gray-600 mb-1.5 font-bold">Chẩn đoán:</label>
+                   <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={3} placeholder="Viêm họng cấp..." className="w-full p-3 border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-[#2563EB]/50 focus:border-[#2563EB] font-bold text-[#2563EB] resize-none bg-blue-50/20 focus:bg-white transition-all"></textarea>
+               </div>
+
+               <div>
+                   <label className="block text-gray-600 mb-1.5 font-bold">Điều trị:</label>
+                   <textarea value={treatment} onChange={e => setTreatment(e.target.value)} rows={3} placeholder="Nghỉ ngơi..." className="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#2563EB]/50 focus:border-[#2563EB] resize-none bg-gray-50 focus:bg-white transition-all"></textarea>
+               </div>
+               
+               <div>
+                   <label className="block text-gray-600 mb-1.5 font-bold">Ghi chú:</label>
+                   <textarea value={examNotes} onChange={e => setExamNotes(e.target.value)} rows={3} placeholder="Không có ghi chú..." className="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#2563EB]/50 focus:border-[#2563EB] resize-none bg-gray-50 focus:bg-white transition-all"></textarea>
+               </div>
+            </div>
+            
+            <div className="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+               <button onClick={() => setShowExamModal(false)} className="px-6 py-2.5 rounded-xl font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all">Đóng</button>
+               <button onClick={() => setShowExamModal(false)} className="px-6 py-2.5 rounded-xl font-bold text-white bg-[#2563EB] hover:bg-blue-700 shadow-sm transition-all flex items-center gap-2"><CheckCircle2 size={18}/> Xác nhận & Lưu</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
