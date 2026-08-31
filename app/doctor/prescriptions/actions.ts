@@ -91,7 +91,9 @@ export async function getDoctorPrescriptionsData() {
             symptoms: true,
             diagnosis: true,
             treatment: true,
-            notes: true
+            notes: true,
+            followUpDate: true,
+            followUpReason: true
           }
         }
       }

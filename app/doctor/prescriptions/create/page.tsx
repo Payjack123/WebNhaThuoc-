@@ -31,6 +31,7 @@ export default function CreatePrescriptionPage() {
   const [patientInstructions, setPatientInstructions] = useState(''); // Hướng dẫn cho bệnh nhân
   const [type, setType] = useState('Ngoại trú');
   const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpNote, setFollowUpNote] = useState('');
   
   const [searchPatientCode, setSearchPatientCode] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -66,11 +67,29 @@ export default function CreatePrescriptionPage() {
       setDiagnosis(exam.diagnosis || '');
       setTreatment(exam.treatment || '');
       setExamNotes(exam.notes || '');
+      
+      // Auto fill lịch tái khám nếu có
+      if (exam.followUpDate) {
+         // Chuyển đổi định dạng nếu cần, thường input type="date" yêu cầu YYYY-MM-DD
+         // Giả sử DB lưu chuẩn YYYY-MM-DD hoặc DD/MM/YYYY.
+         let formattedFollowUp = exam.followUpDate;
+         if (formattedFollowUp.includes('/')) {
+             const [d, m, y] = formattedFollowUp.split('/');
+             formattedFollowUp = `${y}-${m}-${d}`;
+         }
+         setFollowUpDate(formattedFollowUp);
+         setFollowUpNote(exam.followUpReason || '');
+      } else {
+         setFollowUpDate('');
+         setFollowUpNote('');
+      }
     } else {
       setSymptoms('');
       setDiagnosis('');
       setTreatment('');
       setExamNotes('');
+      setFollowUpDate('');
+      setFollowUpNote('');
     }
   }, [activePatient]);
 
@@ -415,7 +434,7 @@ export default function CreatePrescriptionPage() {
                                   </div>
                                   <div>
                                       <label className="block text-xs font-bold text-gray-500 mb-1">Ghi chú</label>
-                                      <input type="text" placeholder="Tái khám kiểm tra..." className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#2563EB]" />
+                                      <input type="text" value={followUpNote} onChange={e => setFollowUpNote(e.target.value)} placeholder="Tái khám kiểm tra..." className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#2563EB]" />
                                   </div>
                               </div>
                               <div className="mt-4 flex items-center gap-2">
