@@ -33,6 +33,8 @@ model User {
   labTests              LabTest[]
   prescriptionsAsDoctor Prescription[]   @relation("DoctorPrescriptions")
   prescriptions         Prescription[]   @relation("PatientPrescriptions")
+  invoicesAsPatient     Invoice[]        @relation("PatientInvoices")
+  invoicesAsDoctor      Invoice[]        @relation("DoctorInvoices")
 
   @@map("users")
 }
@@ -104,6 +106,7 @@ model Appointment {
   doctor          User         @relation("DoctorAppointments", fields: [doctorId], references: [id])
   patient         User         @relation("PatientAppointments", fields: [patientId], references: [id])
   examination     Examination?
+  invoice         Invoice?
 
   @@index([doctorId], map: "Appointment_doctorId_fkey")
   @@index([patientId], map: "Appointment_patientId_fkey")
@@ -204,4 +207,41 @@ enum Role {
   DOCTOR
   RECEPTIONIST
   ADMIN
+}
+
+model Invoice {
+  id              Int            @id @default(autoincrement())
+  invoiceCode     String         @unique @db.VarChar(50)
+  appointmentId   Int?           @unique
+  patientId       Int
+  doctorId        Int
+  totalAmount     Int            @default(0)
+  insuranceAmount Int            @default(0)
+  finalAmount     Int            @default(0)
+  status          String         @default("Chờ thanh toán")
+  paymentMethod   String?        @db.VarChar(50)
+  paymentDate     DateTime?
+  paymentRef      String?        @db.VarChar(100)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  patient         User           @relation("PatientInvoices", fields: [patientId], references: [id])
+  doctor          User           @relation("DoctorInvoices", fields: [doctorId], references: [id])
+  appointment     Appointment?   @relation(fields: [appointmentId], references: [id])
+  items           InvoiceItem[]
+
+  @@index([patientId], map: "Invoice_patientId_fkey")
+  @@index([doctorId], map: "Invoice_doctorId_fkey")
+}
+
+model InvoiceItem {
+  id         Int      @id @default(autoincrement())
+  invoiceId  Int
+  name       String   @db.VarChar(255)
+  price      Int      @default(0)
+  quantity   Int      @default(1)
+  total      Int      @default(0)
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], map: "InvoiceItem_invoiceId_fkey")
 }

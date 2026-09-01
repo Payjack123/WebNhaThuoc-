@@ -67,11 +67,11 @@ export default function PatientSidebar({ activePage }: { activePage: string }) {
         </Link>
 
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-2">Thu phí</p>
-        <Link href="/patient/payments/invoices" className={getMenuItemClass('invoices')}>
-          <Wallet size={18} /> Thanh toán viện phí
-        </Link>
         <Link href="/patient/payments/history" className={getMenuItemClass('history')}>
           <FileText size={18} /> Danh sách hóa đơn
+        </Link>
+        <Link href="/patient/payments/invoices" className={getMenuItemClass('invoices')}>
+          <Wallet size={18} /> Thanh toán viện phí
         </Link>
         <Link href="/patient/payments/insurance" className={getMenuItemClass('insurance')}>
           <HeartPulse size={18} /> Bảo hiểm y tế

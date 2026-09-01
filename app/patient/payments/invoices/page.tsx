@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Bell, Search, User, Lock, ChevronLeft, CalendarDays,
   ShieldCheck, Loader2, Landmark, Wallet, Users, Info, Building2, ChevronRight, FileText
@@ -12,6 +12,8 @@ import { getPatientBillingData, confirmInvoicePayment } from '@/app/patient/paym
 
 export default function PatientBillingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paramId = searchParams.get('id');
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsSubmitting] = useState(false);
@@ -23,12 +25,16 @@ export default function PatientBillingPage() {
     const res = await getPatientBillingData();
     if (res.success && res.data) {
       setData(res.data);
-      // Select the first unpaid invoice, or just the first invoice
-      const unpaidInvoice = res.data.invoices.find((inv: any) => inv.status === 'Chưa thanh toán' || inv.status === 'Quá hạn');
-      if (unpaidInvoice && !selectedInvoiceId) {
-        setSelectedInvoiceId(unpaidInvoice.id);
-      } else if (res.data.invoices.length > 0 && !selectedInvoiceId) {
-        setSelectedInvoiceId(res.data.invoices[0].id);
+      // Select the invoice from query param, or fallback to the first unpaid invoice, or just the first invoice
+      if (paramId) {
+        setSelectedInvoiceId(paramId);
+      } else {
+        const unpaidInvoice = res.data.invoices.find((inv: any) => inv.status === 'Chưa thanh toán' || inv.status === 'Quá hạn');
+        if (unpaidInvoice && !selectedInvoiceId) {
+          setSelectedInvoiceId(unpaidInvoice.id);
+        } else if (res.data.invoices.length > 0 && !selectedInvoiceId) {
+          setSelectedInvoiceId(res.data.invoices[0].id);
+        }
       }
     } else {
       router.push('/login');
@@ -39,6 +45,12 @@ export default function PatientBillingPage() {
   useEffect(() => {
     fetchData();
   }, [router]);
+
+  useEffect(() => {
+    if (paramId && data?.invoices?.find((i: any) => i.id === paramId)) {
+      setSelectedInvoiceId(paramId);
+    }
+  }, [paramId, data]);
 
   const handleConfirmPayment = async (rawId: number) => {
     setIsSubmitting(true);
@@ -63,41 +75,9 @@ export default function PatientBillingPage() {
 
   const { patientInfo, invoices } = data;
   const activeInvoice = invoices.find((inv: any) => inv.id === selectedInvoiceId) || invoices[0];
-  const historyInvoices = invoices.filter((inv: any) => inv.status !== 'Chưa thanh toán' && inv.status !== 'Quá hạn');
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] font-sans text-gray-800 overflow-hidden">
-      <PatientSidebar activePage="invoices" />
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* TOP HEADER */}
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 shrink-0 z-10">
-          <div className="flex items-center w-full max-w-xl relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input 
-              type="text" 
-              placeholder="Tìm bác sĩ, chuyên khoa, dịch vụ..." 
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#2563EB] focus:bg-white outline-none transition-all shadow-sm"
-            />
-          </div>
-          <div className="flex items-center gap-5 ml-auto">
-            <button className="relative p-2.5 text-gray-500 hover:bg-blue-50 hover:text-[#2563EB] rounded-full transition bg-white border border-gray-200 shadow-sm">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
-            <div className="flex items-center gap-3 pl-5 border-l border-gray-200 cursor-pointer group">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-gray-900 group-hover:text-[#2563EB] transition">{patientInfo.name}</p>
-                <p className="text-xs text-gray-500 font-medium">{patientInfo.code}</p>
-              </div>
-              <img src={patientInfo.avatar} alt="Avatar" className="w-11 h-11 rounded-full border-2 border-white shadow-sm group-hover:shadow-md transition" />
-            </div>
-          </div>
-        </header>
-
-        {/* SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
-          <div className="w-full max-w-[1600px] xl:max-w-none mx-auto space-y-6">
+    <div className="w-full max-w-[1600px] xl:max-w-none mx-auto space-y-6">
             
             {/* Tiêu đề & Breadcrumb */}
             <div>
@@ -107,6 +87,60 @@ export default function PatientBillingPage() {
               <Link href="#" className="inline-flex items-center gap-1 text-[#2563EB] text-sm font-bold mt-4 hover:underline">
                 <ChevronLeft size={16} /> Quay lại danh sách hóa đơn
               </Link>
+            </div>
+
+            {/* Danh sách hóa đơn */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-bold text-lg text-gray-900">Danh sách hóa đơn</h2>
+              </div>
+              
+              <div className="overflow-x-auto rounded-lg border border-gray-100">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Mã hóa đơn</th>
+                      <th className="px-4 py-3 font-bold">Ngày tạo</th>
+                      <th className="px-4 py-3 font-bold">Số tiền</th>
+                      <th className="px-4 py-3 font-bold">Phương thức</th>
+                      <th className="px-4 py-3 font-bold">Trạng thái</th>
+                      <th className="px-4 py-3 font-bold text-center">Chi tiết</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {invoices.length > 0 ? (
+                      invoices.map((inv: any, idx: number) => (
+                        <tr 
+                          key={idx} 
+                          onClick={() => setSelectedInvoiceId(inv.id)}
+                          className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${selectedInvoiceId === inv.id ? 'bg-blue-50/50' : ''}`}
+                        >
+                          <td className="px-4 py-3.5 font-medium text-gray-900">{inv.id}</td>
+                          <td className="px-4 py-3.5 text-gray-600">{inv.date}</td>
+                          <td className="px-4 py-3.5 font-medium text-gray-900">{inv.final} ₫</td>
+                          <td className="px-4 py-3.5 text-gray-600">{inv.paymentMethod || '-'}</td>
+                          <td className="px-4 py-3.5">
+                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${inv.status === 'Chưa thanh toán' || inv.status === 'Quá hạn' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                              {inv.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <button className={`p-1.5 rounded-lg transition-colors inline-flex ${selectedInvoiceId === inv.id ? 'text-[#2563EB] bg-blue-100' : 'text-gray-400 hover:text-[#2563EB] hover:bg-blue-50'}`}>
+                              <FileText size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                          Bạn không có hóa đơn nào.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {activeInvoice ? (
@@ -351,68 +385,6 @@ export default function PatientBillingPage() {
               </div>
             )}
 
-            {/* Lịch sử thanh toán */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-lg text-gray-900">Lịch sử thanh toán</h2>
-              </div>
-              
-              <div className="overflow-x-auto rounded-lg border border-gray-100">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 font-bold">Mã hóa đơn</th>
-                      <th className="px-4 py-3 font-bold">Ngày thanh toán</th>
-                      <th className="px-4 py-3 font-bold">Số tiền</th>
-                      <th className="px-4 py-3 font-bold">Phương thức</th>
-                      <th className="px-4 py-3 font-bold">Trạng thái</th>
-                      <th className="px-4 py-3 font-bold text-center">Hóa đơn</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {historyInvoices.length > 0 ? (
-                      historyInvoices.map((inv: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-4 py-3.5 font-medium text-gray-900">{inv.id}</td>
-                          <td className="px-4 py-3.5 text-gray-600">{inv.paymentDate || inv.date}</td>
-                          <td className="px-4 py-3.5 font-medium text-gray-900">{inv.final} ₫</td>
-                          <td className="px-4 py-3.5 text-gray-600">{inv.paymentMethod || 'Thanh toán tại quầy'}</td>
-                          <td className="px-4 py-3.5">
-                            <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-green-100 text-green-700">
-                              Đã thanh toán
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-center">
-                            <button className="p-1.5 text-gray-400 hover:text-[#2563EB] hover:bg-blue-50 rounded-lg transition-colors inline-flex">
-                              <FileText size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                          Chưa có lịch sử thanh toán nào.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {historyInvoices.length > 0 && (
-                <div className="mt-5 flex justify-end">
-                  <Link href="#" className="inline-flex items-center gap-1 text-[#2563EB] text-sm font-bold hover:underline transition-all">
-                    Xem tất cả <ChevronRight size={16} />
-                  </Link>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-
-      </main>
     </div>
   );
 }
